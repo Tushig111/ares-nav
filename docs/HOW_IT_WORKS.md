@@ -18,7 +18,7 @@ Adapt that wording to the work you actually did and understand. Cleaner code doe
 
 ## How the 3D world is made
 
-Three.js draws meshes and point clouds using WebGL. The globe uses a sphere with procedural relief and optional image tiles. Surface sites use mathematical height functions, layered deterministic noise, and site-specific shapes. Heights and colors are precomputed for transitions. These are reconstructed artistic surfaces, not downloaded full-resolution survey DEMs.
+Three.js draws meshes and point clouds using WebGL. The opening globe uses a smooth reference sphere with NASA Mars Trek Viking global mosaic tiles. It contains no procedural relief, generated normal map, or invented close-up surface detail. NASA imagery is drawn at full opacity. A complete 512 × 256 base map loads first, followed by a complete 2048 × 1024 level; failures are labeled, and no synthetic map is substituted. The sphere is a simplified shape, not a measured elevation model. Surface sites use mathematical height functions, layered deterministic noise, and site-specific shapes. Heights and colors are precomputed for transitions. These are reconstructed artistic surfaces, not downloaded full-resolution survey DEMs.
 
 The standing-wave particle effects are inspired by Chladni patterns: sine waves form nodal lines, and shader calculations move and illuminate particles around those patterns. This is a visual technique, not a scientific acoustic experiment on Mars.
 
@@ -53,3 +53,7 @@ A single file mixed presentation, data, sound, physics-like effects, and interac
 **How can someone open it?** Serve the static files locally or publish them on GitHub Pages. Visitors can use the demo without installing the source dependencies.
 
 **What would you improve next?** Verify each dataset and caption, clearly label individual simulated layers, replace procedural terrain with validated elevation inputs, separate the scene controller into smaller systems, and test route behavior across more cases and devices.
+
+## Opening globe data
+
+The globe now uses the NASA Mars Trek **Viking VIS, Global Color Mosaic** layer (`Mars_Viking_MDIM21_ClrMosaic_global_232m`) directly, without generated color blending or synthetic globe relief. The displayed texture is a 2048 × 1024 overview, not the full native-resolution dataset. Source: [NASA Mars Trek API](https://trek.nasa.gov/tiles/apidoc/trekAPI.html?body=mars). The imagery status distinguishes loading, base-map fallback, full overview, and failure. The live globe remains a simplified sphere; surface exploration sites are still procedural demos.

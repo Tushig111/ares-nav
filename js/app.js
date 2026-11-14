@@ -159,194 +159,83 @@ const ORBITAL_MOUNTAINS = [
 
 function createMarsPlanetaryMaps() {
   const W = 2048, H = 1024;
-  const albedoCanvas = document.createElement('canvas');
-  albedoCanvas.width = W; albedoCanvas.height = H;
-  const aCtx = albedoCanvas.getContext('2d');
-  const aImg = aCtx.createImageData(W, H);
-  const heightField = new Float32Array(W * H);
-
-  // Subtle, realistic planetary features (no exaggerated spikes or artificial star-flutes)
-  const features = [
-    { u: (-133.8 + 180) / 360, v: (90 - 18.65) / 180, r: 0.044, d: 0.28, caldera: 0.08 }, // Olympus Mons
-    { u: (-104.1 + 180) / 360, v: (90 - 11.90) / 180, r: 0.026, d: 0.20, caldera: 0.06 }, // Ascraeus Mons
-    { u: (-113.0 + 180) / 360, v: (90 - 1.50) / 180,  r: 0.025, d: 0.16, caldera: 0.05 }, // Pavonis Mons
-    { u: (-120.1 + 180) / 360, v: (90 + 8.30) / 180,  r: 0.028, d: 0.19, caldera: 0.07 }, // Arsia Mons
-    { u: (-110.4 + 180) / 360, v: (90 - 40.50) / 180, r: 0.040, d: 0.12, caldera: 0.04 }, // Alba Mons
-    { u: (147.2 + 180) / 360,  v: (90 - 25.00) / 180, r: 0.026, d: 0.18, caldera: 0.05 }, // Elysium Mons
-    { u: (174.4 + 180) / 360,  v: (90 + 9.30) / 180,  r: 0.018, d: 0.11, caldera: 0.04 }, // Apollinaris Mons
-    { u: (137.44 + 180) / 360, v: (90 + 4.59) / 180,  r: 0.020, d: -0.14, peak: 0.10 },   // Gale Crater + Mount Sharp
-    { u: (77.58 + 180) / 360,  v: (90 - 18.38) / 180, r: 0.017, d: -0.11 },                // Jezero Crater
-    { u: (70.5 + 180) / 360,   v: (90 + 42.4) / 180,  r: 0.088, d: -0.26 },                // Hellas Planitia Basin
-    { u: (-44.0 + 180) / 360,  v: (90 + 49.7) / 180,  r: 0.052, d: -0.18 },                // Argyre Planitia
-    { u: (88.0 + 180) / 360,   v: (90 - 12.9) / 180,  r: 0.044, d: -0.14 }                 // Isidis Planitia
-  ];
-
-  for (let y = 0; y < H; y++) {
-    const v = y / H;
-    const lat = (0.5 - v) * Math.PI;
-    for (let x = 0; x < W; x++) {
-      const u = x / W;
-      const idx = y * W + x;
-      const nx = Math.cos(u * Math.PI * 2) * 2.4 + 4.0;
-      const nz = Math.sin(u * Math.PI * 2) * 2.4 + 4.0;
-      const ny = v * 4.8;
-
-      const base = fbm(nx + ny * 0.4, nz + ny * 0.6, 5);
-      const fine = fbm(nx * 6.0, nz * 6.0 + ny * 3.5, 4);
-      const ridge = ridgedFbm(nx * 2.4 + 1.7, nz * 2.4 + ny * 2.0, 3);
-      const dichotomy = Math.tanh((v - 0.44) * 5.5) * 0.14;
-
-      // Gentle Tharsis planetary bulge
-      const dTharsis = Math.hypot((u - 0.19) * 1.4, (v - 0.48));
-      const tharsisBulge = dTharsis < 0.22 ? Math.pow(1.0 - dTharsis / 0.22, 2.0) * 0.12 : 0.0;
-      let h = (base - 0.5) * 0.22 + (fine - 0.5) * 0.08 + dichotomy + tharsisBulge;
-
-      // Smooth Valles Marineris Grand Canyon trough
-      const canyonU = (u - 0.288) / 0.082;
-      const canyonWobble = Math.sin(u * 46.0) * 0.008 + (fine - 0.5) * 0.010;
-      const canyonV = (v - (0.554 + canyonWobble)) / 0.015;
-      if (Math.abs(canyonU) < 1.15 && Math.abs(canyonV) < 1.6) {
-        const envU = Math.max(0, 1 - canyonU * canyonU);
-        const envV = Math.exp(-canyonV * canyonV * 2.6);
-        h -= envU * envV * 0.24;
-      }
-
-      for (let c = 0; c < features.length; c++) {
-        const cr = features[c];
-        let du = u - cr.u;
-        if (du > 0.5) du -= 1.0;
-        if (du < -0.5) du += 1.0;
-        const dv = (v - cr.v) * 0.55;
-        const dist = Math.sqrt(du * du + dv * dv) / cr.r;
-        if (dist < 1.32) {
-          if (cr.d > 0) {
-            // Smooth, realistic Gaussian-domed shield volcano with subtle summit caldera
-            const t = Math.max(0, 1.0 - dist * dist);
-            const shield = t * t * (0.85 + 0.15 * fine);
-            const caldera = dist < 0.16 ? -cr.caldera * Math.cos((dist / 0.16) * Math.PI * 0.5) : 0;
-            h += cr.d * shield + caldera;
-          } else {
-            const bowl = dist < 0.85 ? (1 - (dist / 0.85) ** 2) * cr.d : 0;
-            const rim = Math.exp(-Math.pow((dist - 0.92) / 0.14, 2)) * (-cr.d * 0.32);
-            const centralPeak = (cr.peak && dist < 0.28) ? cr.peak * Math.pow(1.0 - dist / 0.28, 1.8) : 0;
-            h += bowl + rim + centralPeak;
-          }
-        }
-      }
-
-      heightField[idx] = h;
-
-      const darkBasalt = Math.max(0, Math.min(1, (0.52 - base) * 2.4 + (ridge - 0.55) * 0.5));
-      const brightDust = Math.max(0, Math.min(1, (base - 0.46) * 2.2));
-
-      let r = 192 + brightDust * 42 - darkBasalt * 76 + (fine - 0.5) * 22;
-      let g = 100 + brightDust * 34 - darkBasalt * 44 + (fine - 0.5) * 16;
-      let b = 58 + brightDust * 20 - darkBasalt * 22 + (fine - 0.5) * 10;
-
-      if (h < -0.05) {
-        const shade = Math.max(0.68, 0.92 + h * 0.6);
-        r *= shade; g *= shade * 0.95; b *= shade * 0.93;
-      }
-
-      const polarDist = Math.abs(Math.abs(lat) - Math.PI * 0.5);
-      const frostEdge = 0.14 + (fine - 0.5) * 0.05 + Math.sin(u * Math.PI * 10) * 0.012;
-      if (polarDist < frostEdge) {
-        const iceBlend = Math.min(1, Math.pow(1 - polarDist / frostEdge, 0.55) * 1.25);
-        r = r * (1 - iceBlend) + 245 * iceBlend;
-        g = g * (1 - iceBlend) + 240 * iceBlend;
-        b = b * (1 - iceBlend) + 236 * iceBlend;
-      }
-
-      const p = idx * 4;
-      aImg.data[p] = Math.max(0, Math.min(255, r));
-      aImg.data[p + 1] = Math.max(0, Math.min(255, g));
-      aImg.data[p + 2] = Math.max(0, Math.min(255, b));
-      aImg.data[p + 3] = 255;
-    }
-  }
-  aCtx.putImageData(aImg, 0, 0);
-
-  const normCanvas = document.createElement('canvas');
-  normCanvas.width = W; normCanvas.height = H;
-  const nCtx = normCanvas.getContext('2d');
-  const nImg = nCtx.createImageData(W, H);
-
-  const roughCanvas = document.createElement('canvas');
-  roughCanvas.width = W; roughCanvas.height = H;
-  const rCtx = roughCanvas.getContext('2d');
-  const rImg = rCtx.createImageData(W, H);
-
-  const strength = 5.2;
-  for (let y = 0; y < H; y++) {
-    const ym = Math.max(0, y - 1);
-    const yp = Math.min(H - 1, y + 1);
-    for (let x = 0; x < W; x++) {
-      const xm = (x - 1 + W) % W;
-      const xp = (x + 1) % W;
-      const dx = (heightField[y * W + xp] - heightField[y * W + xm]) * strength;
-      const dy = (heightField[yp * W + x] - heightField[ym * W + x]) * strength;
-      const nz = 1.0;
-      const invLen = 1.0 / Math.sqrt(dx * dx + dy * dy + nz * nz);
-
-      const p = (y * W + x) * 4;
-      nImg.data[p] = ((-dx * invLen) * 0.5 + 0.5) * 255;
-      nImg.data[p + 1] = ((-dy * invLen) * 0.5 + 0.5) * 255;
-      nImg.data[p + 2] = ((nz * invLen) * 0.5 + 0.5) * 255;
-      nImg.data[p + 3] = 255;
-
-      const isIce = aImg.data[p] > 228 && aImg.data[p + 2] > 218;
-      const rough = isIce ? 135 : 228;
-      rImg.data[p] = rough;
-      rImg.data[p + 1] = rough;
-      rImg.data[p + 2] = rough;
-      rImg.data[p + 3] = 255;
-    }
-  }
-  nCtx.putImageData(nImg, 0, 0);
-  rCtx.putImageData(rImg, 0, 0);
-
-  const albedoTex = new THREE.CanvasTexture(albedoCanvas);
+  const canvas = document.createElement('canvas');
+  canvas.width = W;
+  canvas.height = H;
+  const context = canvas.getContext('2d');
+  // A plain placeholder is never presented as a substitute Mars map.
+  context.fillStyle = '#555555';
+  context.fillRect(0, 0, W, H);
+  const albedoTex = new THREE.CanvasTexture(canvas);
   albedoTex.colorSpace = THREE.SRGBColorSpace;
-  albedoTex.anisotropy = 16;
+  albedoTex.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+  let requestId = 0;
 
-  // Level 1 Base WMTS Tiles (4x2 = 8 tiles)
-  const tileW1 = W / 4;
-  const tileH1 = H / 2;
-  for (let row = 0; row < 2; row++) {
-    for (let col = 0; col < 4; col++) {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        aCtx.globalAlpha = 0.85;
-        aCtx.drawImage(img, col * tileW1, row * tileH1, tileW1, tileH1);
-        aCtx.globalAlpha = 1.0;
-        albedoTex.needsUpdate = true;
-      };
-      img.src = resolveWmtsUrl(NASA_RESOURCES.optical, 1, row, col);
+  const showStatus = (message) => {
+    document.getElementById('globe-imagery-status').textContent = message;
+  };
+
+  function loadTile(url) {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.crossOrigin = 'anonymous';
+      const timeout = setTimeout(() => {
+        image.onload = image.onerror = null;
+        image.src = '';
+        reject(new Error('NASA imagery request timed out'));
+      }, 15000);
+      image.onload = () => { clearTimeout(timeout); resolve(image); };
+      image.onerror = () => { clearTimeout(timeout); reject(new Error('NASA imagery could not be loaded')); };
+      image.src = url;
+    });
+  }
+
+  async function loadLevel(template, level, id) {
+    // Mars Trek's advertised equirectangular matrix: 2^(z+1) columns, 2^z rows.
+    const columns = 2 ** (level + 1);
+    const rows = 2 ** level;
+    const tiles = await Promise.all(Array.from({ length: columns * rows }, async (_, index) => {
+      const row = Math.floor(index / columns);
+      const column = index % columns;
+      return { image: await loadTile(resolveWmtsUrl(template, level, row, column)), row, column };
+    }));
+    if (id !== requestId) return false;
+    // Only swap a complete level; late coarse tiles cannot overwrite sharper ones.
+    for (const { image, row, column } of tiles) {
+      context.drawImage(image, column * W / columns, row * H / rows, W / columns, H / rows);
+    }
+    albedoTex.needsUpdate = true;
+    return true;
+  }
+
+  async function reloadGlobeImagery() {
+    const id = ++requestId;
+    const template = NASA_RESOURCES.optical;
+    const isNasa = template === DEFAULT_NASA_RESOURCES.optical;
+    const source = isNasa ? 'NASA Mars Trek · Viking global mosaic' : 'Custom optical imagery';
+    // Clear previous endpoint data so it cannot be mistaken for the new source.
+    context.fillStyle = '#555555';
+    context.fillRect(0, 0, W, H);
+    albedoTex.needsUpdate = true;
+    showStatus('Loading globe imagery…');
+    let baseLoaded = false;
+    try {
+      if (!await loadLevel(template, 0, id)) return;
+      baseLoaded = true;
+      showStatus(`${source} · base map`);
+      if (!await loadLevel(template, 2, id)) return;
+      showStatus(`${source} · 2048 × 1024`);
+    } catch (error) {
+      if (id !== requestId) return;
+      showStatus(baseLoaded ? `${source} · base map (detail unavailable)` : 'Globe imagery unavailable · blank sphere');
+      console.warn('Globe imagery:', error);
     }
   }
 
-  // Level 2 High-Definition Mountain & Crater WMTS Tiles (8x4 = 32 tiles)
-  const tileW2 = W / 8;
-  const tileH2 = H / 4;
-  for (let row = 0; row < 4; row++) {
-    for (let col = 0; col < 8; col++) {
-      const img2 = new Image();
-      img2.crossOrigin = 'anonymous';
-      img2.onload = () => {
-        aCtx.globalAlpha = 0.92;
-        aCtx.drawImage(img2, col * tileW2, row * tileH2, tileW2, tileH2);
-        aCtx.globalAlpha = 1.0;
-        albedoTex.needsUpdate = true;
-      };
-      img2.src = resolveWmtsUrl(NASA_RESOURCES.optical, 2, row, col);
-    }
-  }
-
-  const normalTex = new THREE.CanvasTexture(normCanvas);
-  normalTex.anisotropy = 16;
-  const roughTex = new THREE.CanvasTexture(roughCanvas);
-  return { albedoTex, normalTex, roughTex, heightField, W, H };
+  reloadGlobeImagery();
+  // No measured elevation is decoded from this optical image layer.
+  const heightField = new Float32Array(W * H);
+  return { albedoTex, heightField, W, H, reloadGlobeImagery };
 }
 // 5. THREE.JS SCENE, 3D CHLADNI SPARKLE VORTEX & HIGH-LOD MOLA MARS GLOBE
 const container = document.getElementById('canvas-container');
@@ -459,7 +348,7 @@ const orbitalGroup = new THREE.Group();
 scene.add(orbitalGroup);
 
 const MARS_RADIUS = 4.6;
-const { albedoTex, normalTex, roughTex, heightField, W: MAP_W, H: MAP_H } = createMarsPlanetaryMaps();
+const { albedoTex, heightField, W: MAP_W, H: MAP_H, reloadGlobeImagery } = createMarsPlanetaryMaps();
 
 function sampleGlobeElevation(lat, lon) {
   const u = ((lon + 180) % 360 + 360) % 360 / 360;
@@ -469,7 +358,7 @@ function sampleGlobeElevation(lat, lon) {
   return heightField[py * MAP_W + px] || 0;
 }
 
-// Smooth, realistic 256x192 MOLA 3D Globe Geometry with subtle authentic relief (subtle relief)
+// Smooth reference sphere: the optical mosaic does not supply measured elevation.
 const marsGeo = new THREE.SphereGeometry(MARS_RADIUS, 256, 192);
 const mPos = marsGeo.attributes.position;
 const mUv = marsGeo.attributes.uv;
@@ -486,60 +375,13 @@ for (let i = 0; i < mPos.count; i++) {
 }
 marsGeo.computeVertexNormals();
 
-// Custom Zoom-Adaptive Crisp Micro-Terrain Detail Shader (smooth shading)
-const marsLodUniforms = {
-  uOrbitalZoom: { value: 0.0 }
-};
-
 const marsMat = new THREE.MeshStandardMaterial({
   map: albedoTex,
-  normalMap: normalTex,
   normalScale: new THREE.Vector2(0.88, 0.88),
-  roughnessMap: roughTex,
   roughness: 0.90,
-  metalness: 0.04
+  metalness: 0.0
 });
 
-marsMat.onBeforeCompile = (shader) => {
-  shader.uniforms.uOrbitalZoom = marsLodUniforms.uOrbitalZoom;
-  shader.vertexShader = `
-    varying vec3 vMarsObjPos;
-  ` + shader.vertexShader.replace(
-    '#include <begin_vertex>',
-    `#include <begin_vertex>
-     vMarsObjPos = position;`
-  );
-  shader.fragmentShader = `
-    uniform float uOrbitalZoom;
-    varying vec3 vMarsObjPos;
-    float mHash(vec3 p) {
-      p = fract(p * 0.3183099 + 0.1);
-      p *= 17.0;
-      return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
-    }
-    float mNoise(vec3 x) {
-      vec3 i = floor(x);
-      vec3 f = fract(x);
-      f = f * f * (3.0 - 2.0 * f);
-      return mix(
-        mix(mix(mHash(i + vec3(0,0,0)), mHash(i + vec3(1,0,0)), f.x),
-            mix(mHash(i + vec3(0,1,0)), mHash(i + vec3(1,1,0)), f.x), f.y),
-        mix(mix(mHash(i + vec3(0,0,1)), mHash(i + vec3(1,0,1)), f.x),
-            mix(mHash(i + vec3(0,1,1)), mHash(i + vec3(1,1,1)), f.x), f.y), f.z);
-    }
-  ` + shader.fragmentShader.replace(
-    '#include <map_fragment>',
-    `#include <map_fragment>
-     if (uOrbitalZoom > 0.01) {
-       // Crisp multi-octave eolian regolith, basaltic dunes & micro-crater detail on close zoom
-       float n1 = mNoise(vMarsObjPos * 22.0);
-       float n2 = mNoise(vMarsObjPos * 64.0);
-       float n3 = mNoise(vMarsObjPos * 170.0);
-       float microDetail = ((n1 - 0.5) * 0.08 + (n2 - 0.5) * 0.09 + (n3 - 0.5) * 0.07) * uOrbitalZoom;
-       diffuseColor.rgb = clamp(diffuseColor.rgb + vec3(microDetail * 1.05, microDetail * 0.88, microDetail * 0.72), 0.0, 1.0);
-     }`
-  );
-};
 
 const marsMesh = new THREE.Mesh(marsGeo, marsMat);
 marsMesh.rotation.z = THREE.MathUtils.degToRad(25.19);
@@ -2802,7 +2644,7 @@ window.setMode = (newMode) => {
     controls.minDistance = 4.82; // Zoom right down to single mountains on the globe!
     controls.maxDistance = 30;
     controls.maxPolarAngle = Math.PI;
-    document.getElementById('caption-kicker').textContent = 'NASA MARS TREK WMTS · HIGH-LOD 3D MOUNTAIN GLOBE';
+    document.getElementById('caption-kicker').textContent = 'NASA MARS TREK · VIKING IMAGERY ON A REFERENCE SPHERE';
 
     const targetVec = latLonToVec3(s.lat, s.lon, 13.2);
     targetVec.applyAxisAngle(new THREE.Vector3(0, 1, 0), marsMesh.rotation.y);
@@ -3462,11 +3304,6 @@ function animate() {
 
   if (state.mode === 'orbital') {
     const camDist = camera.position.distanceTo(controls.target);
-    // Dynamically increase procedural mountain & crater micro-detail as user zooms in on the orbital globe!
-    const zoomDetail = THREE.MathUtils.clamp((11.5 - camDist) / 6.2, 0.0, 1.0);
-    marsLodUniforms.uOrbitalZoom.value = zoomDetail;
-    marsMat.normalScale.setScalar(0.88 + zoomDetail * 0.65);
-
     // Altitude-adaptive rotation speed so zooming close to a single mountain feels effortless like Google Earth
     const altFrac = THREE.MathUtils.clamp((camDist - MARS_RADIUS) / 8.5, 0.06, 1.0);
     controls.rotateSpeed = 0.07 + altFrac * 0.65;
@@ -3909,12 +3746,14 @@ window.applyCustomNasaFeeds = () => {
   NASA_RESOURCES.thermal = document.getElementById('feed-url-thermal').value.trim() || DEFAULT_NASA_RESOURCES.thermal;
   NASA_RESOURCES.donkiSep = document.getElementById('feed-url-donki').value.trim() || DEFAULT_NASA_RESOURCES.donkiSep;
   fetchLiveDonkiSpaceWeather();
+  reloadGlobeImagery();
   window.toggleNasaFeedModal(false);
   showToast("Hot-Swapped NASA WMTS & DONKI Resource Endpoints");
 };
 
 window.resetNasaFeeds = () => {
   Object.assign(NASA_RESOURCES, DEFAULT_NASA_RESOURCES);
+  reloadGlobeImagery();
   window.toggleNasaFeedModal(true);
   fetchLiveDonkiSpaceWeather();
   showToast("Reset to Official NASA Trek & DONKI Defaults");

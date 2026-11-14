@@ -23,6 +23,8 @@
         <div id="launch-progress-fill" class="launch-progress-fill launch-progress-fill-layout-1"></div>
       </div>
       <p class="demo-note">An interactive Mars exploration demo. Terrain, routes, and safety estimates are illustrative.</p>
+      
+      <p class="demo-note"><a href="https://trek.nasa.gov/" target="_blank" rel="noopener noreferrer">Globe imagery: NASA Mars Trek / Viking</a> · smooth reference sphere, no measured relief.</p>
       <div class="launch-choice-row">
         <button class="primary-btn" data-click-action="dismiss-launch-overlay">Start with Audio</button>
         <button class="ghost-btn" data-click-action="dismiss-launch-overlay-2">Start Muted</button>
@@ -61,6 +63,7 @@
     </div>
   </div>
   <div id="canvas-container"></div>
+  <div id="globe-imagery-status" role="status">Loading NASA Mars Trek imagery…</div>
   <div id="atmo-veil"></div>
   <div class="vignette"></div>
 
@@ -217,7 +220,7 @@
 
   <!-- Bottom-Left Editorial Caption & Morph Progress Bar -->
   <div class="scene-caption">
-    <div id="caption-kicker" class="scene-kicker">NASA MARS TREK WMTS · MGS MOLA 3D GLOBE</div>
+    <div id="caption-kicker" class="scene-kicker">NASA MARS TREK · VIKING IMAGERY ON A REFERENCE SPHERE</div>
     <div id="caption-title" class="scene-title">Mount Sharp Boxwork (4.5895° S, 137.4417° E)</div>
     <div id="caption-meta" class="scene-meta surface-only">MRO HiRISE-CRISM · ODYSSEY THEMIS · MAVEN SEP-RAD · ESA-NASA TGO</div>
     <div id="caption-demo-pill" class="demo-pill surface-only">

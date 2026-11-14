@@ -65,3 +65,7 @@ Separated HTML, CSS, JavaScript, and GLSL; extracted audio, site data, noise, an
 All six JavaScript modules passed syntax parsing. The local browser preview rendered the globe and surface mode, and the launch and surface controls responded without logged JavaScript or shader errors during those checks. This is a smoke check, not a full validation of every feature, external source, or mobile/GPU combination.
 
 No license has been selected on the owner's behalf. Public visibility permits viewing the repository; redistribution rights for code and third-party assets should be documented separately before reuse.
+
+## Opening globe data
+
+The globe now uses the NASA Mars Trek **Viking VIS, Global Color Mosaic** layer (`Mars_Viking_MDIM21_ClrMosaic_global_232m`) directly, without generated color blending or synthetic globe relief. The displayed texture is a 2048 × 1024 overview, not the full native-resolution dataset. Source: [NASA Mars Trek API](https://trek.nasa.gov/tiles/apidoc/trekAPI.html?body=mars). The imagery status distinguishes loading, base-map fallback, full overview, and failure. The live globe remains a simplified sphere; surface exploration sites are still procedural demos.
