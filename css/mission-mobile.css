@@ -20,3 +20,11 @@
 .mobile-surface-layers{display:none}@media(max-width:768px){.mobile-surface-layers{display:block}.top-bar.mobile-sheet-open .dock{display:flex!important;flex-wrap:wrap;max-width:100%;overflow:visible;width:100%;justify-content:flex-start}.top-bar .dock-btn{min-height:44px}.top-bar .dock-divider{display:none}}
 
 .landmark-callout small{overflow:hidden;text-overflow:ellipsis}
+
+/* Orbital maps expose observational/cartographic data; surface demos retain their tools. */
+body.mode-orbital [data-drawer="weather"],body.mode-orbital [data-drawer="science"],body.mode-orbital #drawer-weather,body.mode-orbital #drawer-science,body.mode-orbital #drawer-layers,body.mode-orbital .sol-mini-pill,body.mode-orbital .mobile-surface-layers,body.mode-orbital [data-mobile-tool="Science"],body.mode-orbital [data-mobile-tool="Weather"]{display:none!important}
+.geology-panel{padding:12px 0;border-bottom:1px solid #334155;margin-bottom:16px}.geology-panel p{font-size:12px;line-height:1.5;color:#cbd5e1}.geology-panel a{color:#38bdf8}.geology-panel label{display:flex;gap:10px;align-items:center;padding:9px 0}.geology-panel [data-geology-legend] i{display:inline-block;width:18px;height:12px;border:1px solid #94a3b8;margin-right:8px}.geology-panel details{max-height:300px;overflow:auto}.geology-panel input[type=checkbox]{width:20px;height:20px;accent-color:#38bdf8}
+@media(max-width:768px){body.mode-orbital .mobile-dock{grid-template-columns:repeat(5,1fr)}}
+
+.geology-badge{position:fixed;top:112px;left:50%;transform:translateX(-50%);z-index:25;background:rgba(6,9,19,.9);color:#cbd5e1;border:1px solid #475569;border-radius:6px;padding:6px 10px;font:10px monospace;pointer-events:none}.geology-badge[hidden]{display:none}@media(max-width:768px){.geology-badge{top:118px;font-size:8px;white-space:nowrap}}
+body.mode-orbital [data-drawer="layers"] .badge{display:none}

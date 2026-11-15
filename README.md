@@ -1,3 +1,7 @@
+# USGS geology upgrade
+
+See [GEOLOGY-SOURCES.md](GEOLOGY-SOURCES.md) for the source chain, scientific rationale and display limits.
+
 # ARES-NAV
 
 Mars exploration demo using verified NASA archive imagery with explicitly synthetic local terrain, spectra, weather and EVA scenarios. Read [SOURCE-INTEGRITY.md](SOURCE-INTEGRITY.md) before presenting scientific claims.

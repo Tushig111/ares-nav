@@ -1,21 +1,22 @@
-import {createProximityLabels} from './proximity-labels.js?v=mission2';
-import {createMobileShell} from './mobile-shell.js?v=mission2';
-import { pickReferenceMap } from './map-picking.js?v=mission2';
-import { createTrekSearch } from './trek-search.js?v=mission2';
-import { createVehicles } from './vehicles.js?v=mission2';
-import { createProjectionController } from './projections.js?v=mission2';
-import { fetchDonkiCatalog, installProvenance } from './official-data.js?v=mission2';
-import { MarsQuadtreeGlobe, spherePoint, rectanglePoint } from './mars-quadtree-globe.js?v=mission2';
-import { createWorkbench } from './exploration-workbench.js?v=mission2';
-import { createMobileAR } from './ar-mobile.js?v=mission2';
-import { destination } from './geodesy.js?v=mission2';
-import { bindControls } from './controls.js?v=mission2';
+import {createGeologyLayers} from './geology-layers.js?v=geology1';
+import {createProximityLabels} from './proximity-labels.js?v=geology1';
+import {createMobileShell} from './mobile-shell.js?v=geology1';
+import { pickReferenceMap } from './map-picking.js?v=geology1';
+import { createTrekSearch } from './trek-search.js?v=geology1';
+import { createVehicles } from './vehicles.js?v=geology1';
+import { createProjectionController } from './projections.js?v=geology1';
+import { fetchDonkiCatalog, installProvenance } from './official-data.js?v=geology1';
+import { MarsQuadtreeGlobe, spherePoint, rectanglePoint } from './mars-quadtree-globe.js?v=geology1';
+import { createWorkbench } from './exploration-workbench.js?v=geology1';
+import { createMobileAR } from './ar-mobile.js?v=geology1';
+import { destination } from './geodesy.js?v=geology1';
+import { bindControls } from './controls.js?v=geology1';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { createSpaceAudioEngine } from './audio.js?v=mission2';
-import { SITES, LAYERS } from './data.js?v=mission2';
-import { hash2, valueNoise, fbm, ridgedFbm } from './noise.js?v=mission2';
-import { GLSL_PARTICLE_VERTEX_SHADER, GLSL_PARTICLE_FRAGMENT_SHADER, GLSL_SPARKLE_VERTEX_SHADER, GLSL_SPARKLE_FRAGMENT_SHADER, GLSL_TERRAIN_VERTEX_SHADER, GLSL_TERRAIN_FRAGMENT_SHADER } from './shaders.js?v=mission2';
+import { createSpaceAudioEngine } from './audio.js?v=geology1';
+import { SITES, LAYERS } from './data.js?v=geology1';
+import { hash2, valueNoise, fbm, ridgedFbm } from './noise.js?v=geology1';
+import { GLSL_PARTICLE_VERTEX_SHADER, GLSL_PARTICLE_FRAGMENT_SHADER, GLSL_SPARKLE_VERTEX_SHADER, GLSL_SPARKLE_FRAGMENT_SHADER, GLSL_TERRAIN_VERTEX_SHADER, GLSL_TERRAIN_FRAGMENT_SHADER } from './shaders.js?v=geology1';
 
 // 1. CHLADNI-PLATE AUTONOMOUS CYMATIC STANDING-WAVE GPU SHADERS
 //    C(x, z) = a * sin(PI * n * x) * sin(PI * m * z) + b * sin(PI * m * x) * sin(PI * n * z)
@@ -63,6 +64,7 @@ let mobileAR = null;
 let vehicles = null;
 let progressiveGlobe = null;
 let projectionView = null;
+let geologyLayers = null;
 let trekPanel = null, proximityLabels = null, mobileShell = null;
 let survivalSavedRoute = null;
 const MOBILE = matchMedia('(max-width: 767px)').matches;
@@ -2518,6 +2520,7 @@ window.setMode = (newMode) => {
   });
 
   document.body.classList.toggle('mode-orbital', newMode === 'orbital');
+  if(newMode==='orbital'&&['weather','science','layers'].includes(state.openDrawer)){document.getElementById('drawer-'+state.openDrawer)?.classList.remove('open');state.openDrawer=null;document.body.classList.remove('drawer-open');}
 
   const s = SITES[state.siteIndex];
   document.getElementById('caption-title').textContent = `${s.shortName} (${s.coords})`;
@@ -2682,6 +2685,7 @@ window.cycleSite = (dir) => {
 };
 
 window.toggleDrawer = (drawerId) => {
+  if(state.mode==='orbital'){if(drawerId==='layers'){trekPanel?.open('layers');return;}if(['weather','science'].includes(drawerId))return;}
   const allDrawers = ['layers', 'weather', 'route', 'science', 'profile'];
   if (state.openDrawer === drawerId) {
     document.getElementById(`drawer-${drawerId}`).classList.remove('open');
@@ -3179,7 +3183,7 @@ function animate(time, frame) {
   upgrades?.update(dt);
   vehicles?.update(dt);
   projectionView?.update(dt);
-  trekPanel?.update();
+  trekPanel?.update();geologyLayers?.update();
   proximityLabels?.update();mobileShell?.update();
   progressiveGlobe?.update(marsMat.opacity);
 
@@ -3842,6 +3846,7 @@ function initializeExplorationTools() {
   api.measurements=upgrades.measurements;api.selectionChanged=record=>{const s=SITES[state.siteIndex];document.getElementById('caption-title').textContent=record?`${record.name} · ${record.lat.toFixed(4)}°, ${record.lon.toFixed(4)}° E`:`${s.shortName} (${s.coords})`;};trekPanel=createTrekSearch(api);
   proximityLabels=createProximityLabels(api,record=>{if(matchMedia('(max-width:768px)').matches)mobileShell?.open('Search');trekPanel.reveal(record);});
   mobileShell=createMobileShell(api,trekPanel);
+  geologyLayers=createGeologyLayers(api,trekPanel.host.querySelector('[data-renderer-layers]'));
 
   vehicles=createVehicles({parent:surfaceGroup,getSite:()=>SITES[state.siteIndex],getHeight:getSiteHeight,getMode:()=>state.mode,host:upgrades.host,enterSurface:()=>{if(state.mode==='orbital')window.setMode('hybrid');},focus:(point,offset)=>{surfaceParticles.visible=false;routeGroup.visible=false;placeDemoGroup.visible=false;scrubRing.visible=false;dropPreviewGroup.visible=false;astronautRig.root.visible=false;controls.minDistance=.12;state.autoSpin=false;state.suitDemoActive=false;state.povMode='free';controls.enabled=true;state.isCameraTransitioning=false;controls.target.copy(point);camera.position.copy(point).add(offset);camera.lookAt(point);controls.update();}});
 
