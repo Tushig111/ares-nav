@@ -24,3 +24,4 @@ body.mw-live #mw-side{display:none!important}#mw-open{border:1px solid #8cbde455
 .mw-head>div:first-child{min-width:0;flex:1}.mw-head>div:last-child{display:flex;gap:4px;flex-shrink:0}.mw-head button{margin:0}.mw-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:0}.mw-tabs button{min-width:0;padding:10px 5px;font-size:11px}.mw-tabs button.on{background:#1b2d3d}.scene-caption{max-width:420px}#progressive-source{bottom:126px}.launch-card h1{text-align:left}@media(max-width:768px){.mw-tabs{display:flex;overflow-x:auto;flex-wrap:nowrap}.mw-tabs button{padding:10px}.mw-head b{font-size:14px}}
 
 @media(max-width:768px){body.mw-open #scientific-provenance{visibility:hidden}.top-bar.mobile-sheet-open .status-pill{flex-wrap:wrap;overflow:visible}.mw-tabs{scrollbar-width:thin}}
+body:has(#launch-overlay:not(.dismissed)) #scientific-provenance{display:none!important}
