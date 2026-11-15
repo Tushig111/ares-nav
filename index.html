@@ -11,9 +11,9 @@
   <link rel="stylesheet" href="./css/styles.css?v=mission-ui1">
   <link rel="stylesheet" href="./css/exploration.css?v=mission-ui1">
   <link rel="stylesheet" href="./css/projections.css?v=mission-ui1">
-  <link rel="stylesheet" href="./css/trek-search.css?v=final1">
-  <link rel="stylesheet" href="css/mission-mobile.css?v=final1">
-<link rel="stylesheet" href="./css/jezero-fieldlab.css?v=final1">
+  <link rel="stylesheet" href="./css/trek-search.css?v=mission2">
+  <link rel="stylesheet" href="css/mission-mobile.css?v=mission2">
+  <link rel="stylesheet" href="css/marswalk.css?v=mw1">
 </head>
 <body class="mode-orbital">
   <!-- Ultra-Minimalist Particle-to-Globe Mission Launch Screen -->
@@ -27,7 +27,7 @@
       <div class="launch-progress-track">
         <div id="launch-progress-fill" class="launch-progress-fill launch-progress-fill-layout-1"></div>
       </div>
-      <p class="demo-note">NASA source imagery with derived map tools. Jezero field lab uses source-derived CTX terrain. Other study surfaces, EVA physiology, spectra and survival decisions are simulated.</p>
+      <p class="demo-note">NASA source imagery with derived map tools. Surface terrain, EVA physiology, spectra and survival decisions are synthetic demonstrations.</p>
       <div class="launch-choice-row">
         <button class="primary-btn" data-click-action="dismiss-launch-overlay">Start with Audio</button>
         <button class="ghost-btn" data-click-action="dismiss-launch-overlay-2">Start Muted</button>
@@ -194,8 +194,8 @@
       <label class="sr-only" for="site-select">Study site</label>
       <button class="step-btn" data-click-action="cycle-site" title="Previous Mars Site ([)">‹</button>
       <select id="site-select" class="site-select" data-change-action="select-site">
-        <option value="0">01 · Gale / Bradbury regional study</option>
-        <option value="1">02 · Jezero fan regional study</option>
+        <option value="1">01 · Jezero · MARSWALK mission (real terrain)</option>
+        <option value="0">02 · Gale / Bradbury regional study</option>
         <option value="2">03 · Valles Marineris: Melas Chasma</option>
         <option value="3">04 · Olympus volcanic / cave concept</option>
       </select>
@@ -272,7 +272,7 @@
     <!-- Drawer 1: 5 Stackable NASA Data Layers -->
     <div id="drawer-layers" class="drawer">
       <div class="drawer-header">
-        <span class="drawer-title">5 Simulated Surface Overlays</span>
+        <span class="drawer-title">5 Stackable NASA Data Layers (Zero-Lag GPU Shader Blending)</span>
         <span id="active-layer-count" class="drawer-sub">3 / 5 Active</span>
       </div>
       <div class="layer-list" id="layer-list"></div>
@@ -422,6 +422,9 @@
     </nav>
   </div>
 
+  <script src="./marswalk/jezeroWorld.js"></script>
+  <script src="./marswalk/survivalModel.js"></script>
+  <script src="./marswalk/bRanges.js"></script>
   <script type="importmap">
     {
       "imports": {
@@ -430,6 +433,6 @@
       }
     }
   </script>
-  <script src="./js/startup.js?v=final1"></script>
+  <script src="./js/startup.js?v=mission2"></script>
 </body>
 </html>

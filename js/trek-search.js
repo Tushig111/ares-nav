@@ -1,5 +1,5 @@
-import {loadSearchCatalog,parseSearchCoordinates,filterSearchRecords,TREK_SEARCH_SOURCES} from './official-data.js?v=final1';
-import {createSearchMarkers} from './search-markers.js?v=final1';
+import {loadSearchCatalog,parseSearchCoordinates,filterSearchRecords,TREK_SEARCH_SOURCES} from './official-data.js?v=mission2';
+import {createSearchMarkers} from './search-markers.js?v=mission2';
 export function createTrekSearch(api){
  const markers=createSearchMarkers(api);let catalog=null,records=[],selection=null,limit=40,tab='search';const state={query:'',metadata:false,type:'all',near:null};
  const toggle=document.createElement('button');toggle.className='trek-trigger icon-chip';toggle.textContent='⌕ Search Mars';toggle.setAttribute('aria-controls','trek-panel');

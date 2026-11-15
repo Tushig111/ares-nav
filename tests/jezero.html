@@ -1,5 +1,0 @@
-<!doctype html><html><meta charset="utf-8"><title>Jezero verification</title><body><h1>Jezero terrain and routing verification</h1><pre id="result">Running…</pre><script type="module">
-import {runTests} from './jezero-core-test.js';
-import {createTerrain,planTerrainRoute} from '../js/jezero-terrain.js';
-try{const tests=await runTests();const [meta,raw,mask]=await Promise.all([fetch('../data/marswalk/terrain.json').then(r=>r.json()),fetch('../data/marswalk/terrain.bin').then(r=>r.arrayBuffer()),fetch('../data/marswalk/validity.bin').then(r=>r.arrayBuffer())]);const terrain=createTerrain(meta,raw,mask),start=terrain.fromGeo(meta.lat0,meta.lon0);const route=await planTerrainRoute(start,{x:start.x+.8,z:start.z},terrain);document.getElementById('result').textContent=JSON.stringify({tests,actualTerrain:{landing:terrain.sample(start.x,start.z),route:route.metrics}},null,2);}catch(e){document.getElementById('result').textContent=JSON.stringify({error:e.stack});}
-</script></body></html>

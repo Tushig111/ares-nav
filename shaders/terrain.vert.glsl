@@ -2,6 +2,9 @@ uniform float uMorphProgress;
 uniform float uReliefScale;
 uniform vec3 uRippleCenter;
 uniform float uRippleProgress;
+uniform float uRealFrom;
+uniform float uRealTo;
+uniform float uTrueSlope;
 
 attribute vec4 aStateFrom;
 attribute vec4 aStateTo;
@@ -14,6 +17,7 @@ varying float vSlopeDeg;
 varying float vScanWave;
 varying float vUhfShadow;
 varying vec2 vUv;
+varying float vReal;
 
 void main() {
   vUv = uv;
@@ -30,6 +34,9 @@ void main() {
 
   float cosTheta = clamp(n.y, 0.0, 1.0);
   vSlopeDeg = degrees(acos(cosTheta));
+  vReal = mix(uRealFrom, uRealTo, m);
+  // real Jezero: report the true slope (stored gradient includes the display exaggeration)
+  vSlopeDeg = mix(vSlopeDeg, degrees(atan(length(vec2(st.y, st.z)) * uTrueSlope)), vReal);
 
   vec3 pos = vec3(position.x, h, position.z);
   float radialDist = length(pos.xz);

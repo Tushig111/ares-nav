@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { MARS, validatePoint, wrapLongitude, planetographicLatitude, pathMetrics, interpolate, toMarsGeoJSON } from './geodesy.js?v=final1';
+import { MARS, validatePoint, wrapLongitude, planetographicLatitude, pathMetrics, interpolate, toMarsGeoJSON } from './geodesy.js?v=mission2';
 export function createMeasurementTools(api, host) {
   const group=new THREE.Group();api.tiles.group?.add(group)||api.globe.add(group);
   const badges=document.createElement('div');badges.className='pin-badges';badges.setAttribute('aria-label','Map measurement pins');document.body.append(badges);
@@ -51,9 +51,9 @@ export function createMeasurementTools(api, host) {
     try{await navigator.clipboard.writeText(location.href);output.textContent+='\nShare URL copied.';}catch{output.textContent+='\nCopy this page URL to share.';}
   };
   const restore=()=>{if(!location.hash.startsWith('#ares='))return;try{const raw=location.hash.slice(6);if(raw.length>30000)throw new Error('Share state too large');const data=JSON.parse(decodeURIComponent(raw));if(data.v!==1||!Array.isArray(data.points)||data.points.length>200)throw new Error('Invalid share state');points=data.points.map(validatePoint);mode=['inspect','line','polygon'].includes(data.mode)?data.mode:'inspect';east360=!!data.east360;host.querySelector('[data-measure-mode]').value=mode;host.querySelector('[data-longitude]').checked=east360;api.restoreView(data.view);render();}catch(error){output.textContent=`Could not restore: ${error.message}`;}};
-  api.canvas.addEventListener('pointerdown',e=>{if(api.getState().fieldLabActive)return;activePointers.add(e.pointerId);if(enabled&&activePointers.size===1)down={x:e.clientX,y:e.clientY,id:e.pointerId};else down=null;},true);
-  api.canvas.addEventListener('pointerup',e=>{if(api.getState().fieldLabActive){down=null;activePointers.clear();return;}activePointers.delete(e.pointerId);if(!enabled||!down||down.id!==e.pointerId)return;const start=down;down=null;if(Math.hypot(e.clientX-start.x,e.clientY-start.y)>8)return;const p=api.pick(e);if(!p)return;if(mode==='inspect')points=[p];else if(points.length<200)points.push(p);redo=[];render();},true);
-  api.canvas.addEventListener('pointercancel',e=>{if(api.getState().fieldLabActive){down=null;activePointers.clear();return;}activePointers.delete(e.pointerId);down=null;},true);
+  api.canvas.addEventListener('pointerdown',e=>{activePointers.add(e.pointerId);if(enabled&&activePointers.size===1)down={x:e.clientX,y:e.clientY,id:e.pointerId};else down=null;},true);
+  api.canvas.addEventListener('pointerup',e=>{activePointers.delete(e.pointerId);if(!enabled||!down||down.id!==e.pointerId)return;const start=down;down=null;if(Math.hypot(e.clientX-start.x,e.clientY-start.y)>8)return;const p=api.pick(e);if(!p)return;if(mode==='inspect')points=[p];else if(points.length<200)points.push(p);redo=[];render();},true);
+  api.canvas.addEventListener('pointercancel',e=>{activePointers.delete(e.pointerId);down=null;},true);
   addEventListener('keydown',e=>{if(e.key==='Escape'&&enabled){enabled=false;host.querySelector('[data-measure-enable]').checked=false;api.controls.enabled=true;api.getState().autoSpin=savedAutoSpin;}});
   addEventListener('hashchange',restore);restore();render();
   return {activate(next='line',value=true){api.ensureOrbital?.();mode=next;host.querySelector('[data-measure-mode]').value=next;const box=host.querySelector('[data-measure-enable]');box.checked=value;box.dispatchEvent(new Event('change'));render();},clear(){points=[];redo=[];render();},refresh:render,update(){

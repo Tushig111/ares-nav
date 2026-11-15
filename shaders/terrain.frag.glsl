@@ -17,6 +17,12 @@ varying float vSlopeDeg;
 varying float vScanWave;
 varying float vUhfShadow;
 varying vec2 vUv;
+varying float vReal;
+uniform sampler2D uMwHazard;
+uniform float uMwHazardOn;
+uniform sampler2D uMwLocal;
+uniform vec4 uMwLocalRect;
+uniform float uMwLocalOn;
 
 float hash(vec2 p) {
   return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -45,11 +51,12 @@ void main() {
   float microGrain = noise2D(vWorldPos.xz * 1.8) * 0.14 - 0.07 + fineGrain;
   float ripple = sin(vWorldPos.x * 2.8 + vWorldPos.z * 2.1 + noise2D(vWorldPos.xz * 0.6) * 3.2) * 0.045;
 
-  vec3 N = normalize(vNormal + vec3(microGrain * 0.35, 0.0, ripple * 0.45));
+  vec3 N = normalize(vNormal + vec3(microGrain * 0.35, 0.0, ripple * 0.45) * (1.0 - vReal));
   float diff = clamp(dot(N, uSunDir), 0.0, 1.0);
   float hemi = N.y * 0.5 + 0.5;
 
-  vec3 rockColor = baseAlbedo * (0.86 + strata * 0.22 + microGrain);
+  // real orbital imagery is shown as it is: no procedural strata or grain painted over it
+  vec3 rockColor = baseAlbedo * mix(0.86 + strata * 0.22 + microGrain, 1.12, vReal);
   vec3 col = mix(vec3(0.16, 0.18, 0.23), rockColor, uLayerWeights.x);
 
   if (uLayerWeights.y > 0.01) {
@@ -93,8 +100,27 @@ void main() {
     col = mix(col, uhfCrimson, (0.28 + hashLine * 0.34) * vUhfShadow);
   }
 
+  if (uMwHazardOn > 0.5) {   // MARSWALK red zones (200 m grid), only on the real Jezero terrain
+    vec4 hzc = texture2D(uMwHazard, vUv);
+    col = mix(col, hzc.rgb, hzc.a * 0.85 * vReal);
+  }
   vec3 ambient = mix(vec3(0.07, 0.06, 0.11), uSkyTint * 0.55, hemi);
   vec3 litColor = col * (ambient + vec3(1.08, 0.96, 0.86) * diff * 0.92);
+  if (vReal > 0.001) {
+    // Real Jezero: same look as the stand-alone MARSWALK site. CTX image x relief, HiRISE detail near the landing site,
+    // plain sun shading, display (sRGB) encoding, and no procedural tints.
+    vec3 rb = baseAlbedo;
+    vec2 lu = (vUv - uMwLocalRect.xy) / (uMwLocalRect.zw - uMwLocalRect.xy);
+    float edge = min(min(lu.x, 1.0 - lu.x), min(lu.y, 1.0 - lu.y));
+    rb = mix(rb, texture2D(uMwLocal, clamp(lu, 0.0, 1.0)).rgb, smoothstep(0.0, 0.05, edge) * uMwLocalOn);
+    if (uMwHazardOn > 0.5) { vec4 hz2 = texture2D(uMwHazard, vUv); rb = mix(rb, hz2.rgb, hz2.a * 0.8); }
+    if (uUhfViewshed > 0.5 && vUhfShadow > 0.25) rb = mix(rb, vec3(0.95, 0.22, 0.28), 0.35 * vUhfShadow);
+    float lamR = clamp(dot(normalize(vNormal), uSunDir), 0.0, 1.0);
+    float dayR = max(smoothstep(-0.1, 0.22, uSunDir.y), 0.10);
+    vec3 rl = rb * (vec3(0.17, 0.15, 0.15) + vec3(1.0, 0.95, 0.88) * (0.35 + 1.05 * lamR) * dayR);
+    rl = pow(clamp(rl, 0.0, 1.0), vec3(1.0 / 2.2));
+    litColor = mix(litColor, rl, vReal);
+  }
   litColor += vec3(0.22, 0.76, 0.98) * vScanWave * 0.85;
 
   float distCam = length(cameraPosition - vWorldPos);

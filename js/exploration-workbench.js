@@ -1,6 +1,6 @@
-import { createMeasurementTools } from './measurement-tools.js?v=final1';
-import { createSurvivalEngine } from './neural-survival.js?v=final1';
-import { tileAt, tileURL, LAYERS } from './mars-quadtree-globe.js?v=final1';
+import { createMeasurementTools } from './measurement-tools.js?v=mission2';
+import { createSurvivalEngine } from './neural-survival.js?v=mission2';
+import { tileAt, tileURL, LAYERS } from './mars-quadtree-globe.js?v=mission2';
 export function createWorkbench(api){
   const trigger=document.createElement('button');trigger.className='icon-chip workbench-trigger';trigger.textContent='Explore + Measure';document.body.append(trigger);
   const host=document.createElement('aside');host.className='workbench glass';host.hidden=true;host.setAttribute('aria-label','Advanced Mars tools');

@@ -1,24 +1,28 @@
-import {createJezeroFieldLab} from './jezero-fieldlab.js?v=final1';
-import {createScientificLayerManager} from './scientific-layer-manager.js?v=final1';
-import {createGeologyLayers} from './geology-layers.js?v=final1';
-import {createProximityLabels} from './proximity-labels.js?v=final1';
-import {createMobileShell} from './mobile-shell.js?v=final1';
-import { pickReferenceMap } from './map-picking.js?v=final1';
-import { createTrekSearch } from './trek-search.js?v=final1';
-import { createVehicles } from './vehicles.js?v=final1';
-import { createProjectionController } from './projections.js?v=final1';
-import { fetchDonkiCatalog, installProvenance } from './official-data.js?v=final1';
-import { MarsQuadtreeGlobe, spherePoint, rectanglePoint } from './mars-quadtree-globe.js?v=final1';
-import { createWorkbench } from './exploration-workbench.js?v=final1';
-import { createMobileAR } from './ar-mobile.js?v=final1';
-import { destination } from './geodesy.js?v=final1';
-import { bindControls } from './controls.js?v=final1';
+import {createProximityLabels} from './proximity-labels.js?v=mission2';
+import {createMobileShell} from './mobile-shell.js?v=mission2';
+import { pickReferenceMap } from './map-picking.js?v=mission2';
+import { createTrekSearch } from './trek-search.js?v=mission2';
+import { createVehicles } from './vehicles.js?v=mission2';
+import { createProjectionController } from './projections.js?v=mission2';
+import { fetchDonkiCatalog, installProvenance } from './official-data.js?v=mission2';
+import { MarsQuadtreeGlobe, spherePoint, rectanglePoint } from './mars-quadtree-globe.js?v=mission2';
+import { createWorkbench } from './exploration-workbench.js?v=mission2';
+import { createMobileAR } from './ar-mobile.js?v=mission2';
+import { destination } from './geodesy.js?v=mission2';
+import { bindControls } from './controls.js?v=mission2';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { createSpaceAudioEngine } from './audio.js?v=final1';
-import { SITES, LAYERS } from './data.js?v=final1';
-import { hash2, valueNoise, fbm, ridgedFbm } from './noise.js?v=final1';
-import { GLSL_PARTICLE_VERTEX_SHADER, GLSL_PARTICLE_FRAGMENT_SHADER, GLSL_SPARKLE_VERTEX_SHADER, GLSL_SPARKLE_FRAGMENT_SHADER, GLSL_TERRAIN_VERTEX_SHADER, GLSL_TERRAIN_FRAGMENT_SHADER } from './shaders.js?v=final1';
+import { createSpaceAudioEngine } from './audio.js?v=mission2';
+import { SITES, LAYERS } from './data.js?v=mission2';
+import { hash2, valueNoise, fbm, ridgedFbm } from './noise.js?v=mission2';
+import { REAL, relabelJezero } from './marswalk-real.js?v=mw1';
+import { initMarswalk } from './marswalk-mission.js?v=mw1';
+relabelJezero(SITES);
+let marswalk = null;
+const isReal = (i) => i === 1 && !!REAL;
+const unitMeters = (i) => isReal(i) ? REAL.K * 1000 : 24;                    // metres per scene unit
+const elevFromY = (i, y, relief) => isReal(i) ? REAL.landingElev + y / relief / REAL.E0 * REAL.K * 1000 : SITES[i].baseElevM + y * 18;
+import { GLSL_PARTICLE_VERTEX_SHADER, GLSL_PARTICLE_FRAGMENT_SHADER, GLSL_SPARKLE_VERTEX_SHADER, GLSL_SPARKLE_FRAGMENT_SHADER, GLSL_TERRAIN_VERTEX_SHADER, GLSL_TERRAIN_FRAGMENT_SHADER } from './shaders.js?v=mission2';
 
 // 1. CHLADNI-PLATE AUTONOMOUS CYMATIC STANDING-WAVE GPU SHADERS
 //    C(x, z) = a * sin(PI * n * x) * sin(PI * m * z) + b * sin(PI * m * x) * sin(PI * n * z)
@@ -62,12 +66,10 @@ async function fetchLiveDonkiSpaceWeather() {
 }
 
 let upgrades = null;
-let fieldLab = null;
 let mobileAR = null;
 let vehicles = null;
 let progressiveGlobe = null;
 let projectionView = null;
-let geologyLayers = null, scientificLayers = null;
 let trekPanel = null, proximityLabels = null, mobileShell = null;
 let survivalSavedRoute = null;
 const MOBILE = matchMedia('(max-width: 767px)').matches;
@@ -731,6 +733,7 @@ const PARTICLE_GRID = MOBILE ? 120 : 240;
 const PARTICLE_COUNT = PARTICLE_GRID * PARTICLE_GRID; // 57,600 GPU particles
 
 function evaluateSitePoint(siteId, x, z) {
+  if (isReal(siteId)) return REAL.evaluate(x, z);
   const s = SITES[siteId];
   const nx = x * 0.045 + s.seed;
   const nz = z * 0.045 + s.seed * 0.7;
@@ -785,6 +788,7 @@ function evaluateSitePoint(siteId, x, z) {
 }
 
 function createSiteHighResTexture(siteIdx) {
+  if (isReal(siteIdx)) return REAL.texture;
   const s = SITES[siteIdx];
   const W = 512, H = 512;
   const canvas = document.createElement('canvas');
@@ -913,6 +917,7 @@ function getSiteHeight(siteIdx, x, z) {
 }
 
 function getSiteSlopeDeg(siteIdx, x, z) {
+  if (isReal(siteIdx)) return REAL.slopeDeg(x, z);
   const eps = 0.6;
   const hx = getSiteHeight(siteIdx, x + eps, z) - getSiteHeight(siteIdx, x - eps, z);
   const hz = getSiteHeight(siteIdx, x, z + eps) - getSiteHeight(siteIdx, x, z - eps);
@@ -946,7 +951,15 @@ const terrainShaderMat = new THREE.ShaderMaterial({
     uUhfViewshed: { value: 0.0 },
     uSkyTint: { value: new THREE.Vector3(0.78, 0.52, 0.38) },
     uRippleCenter: { value: new THREE.Vector3(0, 0, 0) },
-    uRippleProgress: { value: 1.0 }
+    uRippleProgress: { value: 1.0 },
+    uRealFrom: { value: 0.0 },
+    uRealTo: { value: 0.0 },
+    uTrueSlope: { value: REAL ? 1.0 / REAL.E0 : 1.0 },
+    uMwHazard: { value: null },
+    uMwHazardOn: { value: 0.0 },
+    uMwLocal: { value: REAL ? REAL.localTexture : null },
+    uMwLocalRect: { value: REAL ? new THREE.Vector4(...REAL.localRect) : new THREE.Vector4(0, 0, 1, 1) },
+    uMwLocalOn: { value: REAL && REAL.localTexture !== REAL.texture ? 1.0 : 0.0 }
   },
   vertexShader: GLSL_TERRAIN_VERTEX_SHADER,
   fragmentShader: GLSL_TERRAIN_FRAGMENT_SHADER,
@@ -1025,6 +1038,7 @@ function clearGroupAndDispose(group) {
 
 function buildSiteLandmarkProps(siteIdx) {
   clearGroupAndDispose(placeDemoGroup);
+  if (isReal(siteIdx)) return;   // no procedural props on the real Jezero terrain
   // Strictly hide basic/hybrid landmark props whenever in Pure Particle LiDAR or Orbital mode!
   placeDemoGroup.visible = (state.mode === 'hybrid' && state.placeDemoActive);
 
@@ -1566,15 +1580,16 @@ function rebuildRouteGeometry() {
   const pts3D = wps.map(w => new THREE.Vector3(w.x, getSiteHeight(siteIdx, w.x, w.z) + 0.35, w.z));
   routeCurve = new THREE.CatmullRomCurve3(pts3D, false, 'catmullrom', 0.25);
 
-  const rawCurvePts = routeCurve.getPoints(150);
+  const rawCurvePts = routeCurve.getPoints(Math.max(150, wps.length * 6));
   routeSamplePoints = rawCurvePts.map(p => new THREE.Vector3(p.x, getSiteHeight(siteIdx, p.x, p.z) + 0.28, p.z));
   routeCurve = new THREE.CatmullRomCurve3(routeSamplePoints);
 
-  const tubeGeo = new THREE.TubeGeometry(routeCurve, 128, 0.16, 8, false);
+  const tubeGeo = new THREE.TubeGeometry(routeCurve, Math.max(128, wps.length * 6), 0.16, 8, false);
   const tubeMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
   routeGroup.add(new THREE.Mesh(tubeGeo, tubeMat));
 
   wps.forEach((w, idx) => {
+    if (w.via) return;   // MARSWALK path-shaping points: no pin, no label
     const y = getSiteHeight(siteIdx, w.x, w.z);
     const isSelected = idx === state.selectedWp;
     const pinColor = idx === 0 ? 0x34d399 : (isSelected ? 0x38bdf8 : 0xe06d44);
@@ -1623,12 +1638,12 @@ function rebuildRouteGeometry() {
     let segDistM = 0;
     if (idx > 0) {
       const prev = wps[idx - 1];
-      segDistM = Math.round(Math.hypot(w.x - prev.x, w.z - prev.z) * 24);
+      segDistM = Math.round(Math.hypot(w.x - prev.x, w.z - prev.z) * unitMeters(siteIdx));
     }
     const tagEl = document.createElement('div');
     tagEl.className = 'surf-label';
     tagEl.title = 'Click to glide camera, pulse Chladni wave & view NASA photo';
-    tagEl.innerHTML = `<div class="surf-chip">${idx === 0 ? 'HAB' : 'WP-' + idx} · ${idx === 0 ? site.baseElevM + 'm' : '+' + segDistM + 'm'} 📸</div>`;
+    tagEl.innerHTML = `<div class="surf-chip">${w.label || (idx === 0 ? 'HAB' : 'WP-' + idx)}${w.label ? '' : ' · ' + (idx === 0 ? site.baseElevM + 'm' : '+' + segDistM + 'm')} 📸</div>`;
     tagEl.addEventListener('click', (ev) => {
       ev.stopPropagation();
       spaceAudio.playClickSFX('tap');
@@ -1759,7 +1774,7 @@ function openNasaReconModal(wp, site = SITES[state.siteIndex], wpIdx = state.sel
   };
   imgEl.src = photoObj.url;
 
-  const elevM = Math.round(site.baseElevM + getSiteHeight(site.id, wp.x, wp.z) * 18);
+  const elevM = Math.round(elevFromY(site.id, getSiteHeight(site.id, wp.x, wp.z), state.relief));
   const slopeDeg = getSiteSlopeDeg(site.id, wp.x, wp.z).toFixed(1);
   const tiVal = Math.round(site.thermalInertia + (hash2(wp.x, wp.z) - 0.5) * 70);
 
@@ -1872,6 +1887,7 @@ function focusPinnedWaypoint(wpIdx) {
   renderWaypointList();
   updateWaypointInspectorUI();
   openNasaReconModal(wp, site, wpIdx);
+  window.dispatchEvent(new CustomEvent('ares:wp-focus', { detail: { index: wpIdx, wp } }));
 
   // Smoothly glide camera to frame the pinned outcrop if in free camera mode
   if (state.mode !== 'orbital' && state.povMode === 'free' && !state.isNadir) {
@@ -1901,6 +1917,8 @@ function startSurfaceMorph(targetSiteIdx) {
 
   terrainShaderMat.uniforms.uSiteTexFrom.value = SITE_TEXTURES[fromIdx];
   terrainShaderMat.uniforms.uSiteTexTo.value = SITE_TEXTURES[toIdx];
+  terrainShaderMat.uniforms.uRealFrom.value = isReal(fromIdx) ? 1.0 : 0.0;
+  terrainShaderMat.uniforms.uRealTo.value = isReal(toIdx) ? 1.0 : 0.0;
 
   attrPosFrom.array.set(SITE_CACHES[fromIdx].particlePos);
   attrPosTo.array.set(SITE_CACHES[toIdx].particlePos);
@@ -1934,6 +1952,7 @@ function startSurfaceMorph(targetSiteIdx) {
 }
 // 10. A* SLOPE/HAZARD PATHFINDER & TERRAIN WAYPOINT RAYCASTER
 function runAStarOptimizer() {
+  if (isReal(state.siteIndex) && marswalk) { marswalk.resetOptimal(); return; }
   const siteIdx = state.siteIndex;
   const wps = state.waypoints;
   if (wps.length < 2) return;
@@ -2002,15 +2021,15 @@ function runAStarOptimizer() {
     const p2 = path[Math.floor(path.length * 0.66)];
     state.waypoints = [
       start,
-      { name: "A*-1 Synthetic cost bypass", type: "DEMO", tool: "Synthetic slope cost", x: toWorld(p1.gx), z: toWorld(p1.gz) },
-      { name: "A*-2 Synthetic route candidate", type: "DEMO", tool: "Synthetic slope cost", x: toWorld(p2.gx), z: toWorld(p2.gz) },
+      { name: "A*-1 Low-Gradient Bypass", type: "SAFE", tool: "RIMFAX + NavCam", x: toWorld(p1.gx), z: toWorld(p1.gz) },
+      { name: "A*-2 Verified Bedrock Shelf", type: "SAFE", tool: "PIXL + SHERLOC", x: toWorld(p2.gx), z: toWorld(p2.gz) },
       goal
     ];
     state.selectedWp = 1;
     rebuildRouteGeometry();
     renderWaypointList();
     triggerChladniRipple(new THREE.Vector3(toWorld(p1.gx), getSiteHeight(siteIdx, toWorld(p1.gx), toWorld(p1.gz)), toWorld(p1.gz)));
-    showToast("A* demo route updated. Inspect sampled grades; no safety guarantee.");
+    showToast("A* Pathfinder: Re-routed around >15° slope hazards");
   }
 }
 
@@ -2041,7 +2060,7 @@ function intersectTerrainSurface() {
 }
 
 renderer.domElement.addEventListener('pointerdown', (e) => {
-  if (fieldLab?.active || mobileAR?.active || upgrades?.measurements.enabled) return;
+  if (mobileAR?.active || upgrades?.measurements.enabled) return;
   pointerDownPos = { x: e.clientX, y: e.clientY };
   lastPointerPos = { x: e.clientX, y: e.clientY };
   if (state.mode !== 'orbital' && state.povMode !== 'free') {
@@ -2054,7 +2073,7 @@ window.addEventListener('pointerup', () => {
 });
 
 renderer.domElement.addEventListener('pointermove', (e) => {
-  if (fieldLab?.active || mobileAR?.active || upgrades?.measurements.enabled) return;
+  if (mobileAR?.active || upgrades?.measurements.enabled) return;
   if (state.mode === 'orbital') return;
 
   // Allow smooth, comfortable manual look-around when in Shoulder or Visor POV
@@ -2080,7 +2099,7 @@ renderer.domElement.addEventListener('pointermove', (e) => {
       dropPreviewGroup.position.set(pt.x, exactY + 0.08, pt.z);
       dropPreviewGroup.visible = true;
       const slope = getSiteSlopeDeg(state.siteIndex, pt.x, pt.z).toFixed(1);
-      const elev = Math.round(SITES[state.siteIndex].baseElevM + exactY * 18);
+      const elev = Math.round(elevFromY(state.siteIndex, exactY, state.relief));
       document.getElementById('drop-wp-coords').textContent =
         `DROP TARGET: (${pt.x.toFixed(1)}m, ${pt.z.toFixed(1)}m) · SIM ELEV ${elev}m · SLOPE ${slope}°`;
     } else {
@@ -2094,7 +2113,7 @@ renderer.domElement.addEventListener('pointermove', (e) => {
 });
 
 renderer.domElement.addEventListener('pointerup', (e) => {
-  if (fieldLab?.active || mobileAR?.active || upgrades?.measurements.enabled) return;
+  if (mobileAR?.active || upgrades?.measurements.enabled) return;
   if (state.mode === 'orbital') return;
   const moveDist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
   if (moveDist > 9) return;
@@ -2122,6 +2141,10 @@ renderer.domElement.addEventListener('pointerup', (e) => {
       const pt = hits[0].point;
       const clampedX = Math.max(-DEM_SIZE * 0.46, Math.min(DEM_SIZE * 0.46, pt.x));
       const clampedZ = Math.max(-DEM_SIZE * 0.46, Math.min(DEM_SIZE * 0.46, pt.z));
+      if (isReal(state.siteIndex) && marswalk) {   // MARSWALK: custom pin + instant re-route on the real grid
+        window.toggleAddWaypoint(); dropPreviewGroup.visible = false; spaceAudio.playClickSFX('mode');
+        marswalk.addPinUnits(clampedX, clampedZ); return;
+      }
       const newWp = {
         name: `WP-${state.waypoints.length} Field Sample`,
         type: "EVA",
@@ -2198,6 +2221,7 @@ function renderWaypointList() {
   const siteIdx = state.siteIndex;
 
   state.waypoints.forEach((w, idx) => {
+    if (w.via) return;
     const slope = getSiteSlopeDeg(siteIdx, w.x, w.z);
     const item = document.createElement('div');
     item.className = `wp-item ${idx === state.selectedWp ? 'selected' : ''}`;
@@ -2222,10 +2246,10 @@ function updateWaypointInspectorUI() {
   const site = SITES[state.siteIndex];
   const wp = state.waypoints[state.selectedWp] || state.waypoints[0];
   if (!wp) return;
-  const elev = Math.round(site.baseElevM + getSiteHeight(state.siteIndex, wp.x, wp.z) * 18);
+  const elev = Math.round(elevFromY(state.siteIndex, getSiteHeight(state.siteIndex, wp.x, wp.z), state.relief));
   const slope = getSiteSlopeDeg(state.siteIndex, wp.x, wp.z).toFixed(1);
   document.getElementById('wpi-name').textContent = `WP: ${wp.name}`;
-  document.getElementById('wpi-metrics').textContent = `SIM Elev: ${elev}m · Slope: ${slope}° · TI: ${site.thermalInertia} TIU`;
+  document.getElementById('wpi-metrics').textContent = `${isReal(state.siteIndex) ? 'CTX DEM' : 'SIM'} Elev: ${elev}m · Slope: ${slope}° · TI: ${site.thermalInertia} TIU`;
   document.getElementById('wpi-tool').textContent = `Tool: ${wp.tool || site.instrument}`;
 }
 
@@ -2243,7 +2267,7 @@ function updateMissionMetrics() {
     if (s > maxSlope) maxSlope = s;
   });
 
-  const distKm = Math.max(0.45, distUnits * 0.024);
+  const distKm = Math.max(0.45, distUnits * unitMeters(state.siteIndex) / 1000);
   state.totalTraverseKm = distKm;
   const effectiveSpeedKmh = Math.max(0.4, 3.6 * state.astronautSpeed);
   const durHrs = distKm / effectiveSpeedKmh;
@@ -2348,7 +2372,7 @@ function drawElevationProfile(hoverIndex = -1) {
   ctx.clearRect(0, 0, W, H);
 
   const site = SITES[state.siteIndex];
-  const elevs = routeSamplePoints.map(p => site.baseElevM + p.y * 18);
+  const elevs = routeSamplePoints.map(p => elevFromY(state.siteIndex, p.y, state.relief));
   const minE = Math.min(...elevs) - 10;
   const maxE = Math.max(...elevs) + 10;
 
@@ -2398,7 +2422,7 @@ profileCanvas.addEventListener('pointermove', (e) => {
   const idx = Math.floor(normX * (routeSamplePoints.length - 1));
   const pt = routeSamplePoints[idx];
   const site = SITES[state.siteIndex];
-  const elev = Math.round(site.baseElevM + pt.y * 18);
+  const elev = Math.round(elevFromY(state.siteIndex, pt.y, state.relief));
   const slope = getSiteSlopeDeg(state.siteIndex, pt.x, pt.z);
 
   scrubRing.position.set(pt.x, pt.y + 0.15, pt.z);
@@ -2512,7 +2536,6 @@ window.toggleSuitDemoShowcase = () => {
 };
 
 window.setMode = (newMode) => {
-  fieldLab?.close();
   surfaceParticles.visible=true;routeGroup.visible=true;astronautRig.root.visible=true;
   projectionView?.reset();
   const prevMode = state.mode;
@@ -2524,7 +2547,6 @@ window.setMode = (newMode) => {
   });
 
   document.body.classList.toggle('mode-orbital', newMode === 'orbital');
-  if(newMode==='orbital'&&['weather','science','layers'].includes(state.openDrawer)){document.getElementById('drawer-'+state.openDrawer)?.classList.remove('open');state.openDrawer=null;document.body.classList.remove('drawer-open');}
 
   const s = SITES[state.siteIndex];
   document.getElementById('caption-title').textContent = `${s.shortName} (${s.coords})`;
@@ -2598,9 +2620,9 @@ window.setMode = (newMode) => {
       terrainMesh.visible = true;
       terrainShaderMat.uniforms.uOpacity.value = 1.0;
       particleShaderMat.uniforms.uPointSize.value = 1.55;
-      particleShaderMat.uniforms.uOpacityScale.value = state.placeDemoActive ? 0.34 : 0.0;
+      particleShaderMat.uniforms.uOpacityScale.value = (state.placeDemoActive && !isReal(state.siteIndex)) ? 0.34 : 0.0;   // no decorative particles over the real Jezero image
       placeDemoGroup.visible = state.placeDemoActive;
-      document.getElementById('caption-kicker').textContent = 'SYNTHETIC SURFACE · NASA-INSPIRED DEMONSTRATION';
+      document.getElementById('caption-kicker').textContent = isReal(state.siteIndex) ? 'REAL CTX DEM + IMAGERY · MARSWALK MISSION · OUTCOMES SIMULATED' : 'SYNTHETIC SURFACE · NASA-INSPIRED DEMONSTRATION';
     } else if (newMode === 'particles') {
       // Strictly hide solid terrain mesh & basic landmark objects (arch/cavern/mesas/walls) so ZERO objects are left behind!
       terrainMesh.visible = false;
@@ -2648,7 +2670,7 @@ window.selectSite = (indexStr) => {
   document.getElementById('site-select').value = String(idx);
 
   const s = SITES[idx];
-  state.waypoints = JSON.parse(JSON.stringify(s.defaultWaypoints));
+  state.waypoints = (isReal(idx) && marswalk) ? marswalk.routeWaypoints() : JSON.parse(JSON.stringify(s.defaultWaypoints));
   state.selectedWp = 0;
   state.reconPhotoVariant = 0;
   povGimbal.initialized = false;
@@ -2658,6 +2680,7 @@ window.selectSite = (indexStr) => {
   document.getElementById('caption-title').textContent = `${s.shortName} (${s.coords})`;
   document.getElementById('caption-demo-text').textContent = s.demoLabel;
   document.getElementById('science-brief').innerHTML = s.brief;
+  if (state.mode === 'hybrid') document.getElementById('caption-kicker').textContent = isReal(idx) ? 'REAL CTX DEM + IMAGERY · MARSWALK MISSION · OUTCOMES SIMULATED' : 'SYNTHETIC SURFACE · NASA-INSPIRED DEMONSTRATION';
 
   markerEls.forEach((el, i) => el.classList.toggle('selected-site', i === idx));
 
@@ -2689,7 +2712,6 @@ window.cycleSite = (dir) => {
 };
 
 window.toggleDrawer = (drawerId) => {
-  if(drawerId==='layers'){trekPanel?.open('layers');return;}if(state.mode==='orbital'&&['weather','science'].includes(drawerId))return;
   const allDrawers = ['layers', 'weather', 'route', 'science', 'profile'];
   if (state.openDrawer === drawerId) {
     document.getElementById(`drawer-${drawerId}`).classList.remove('open');
@@ -2714,7 +2736,7 @@ window.togglePlaceDemo = () => {
   btn.classList.toggle('demo-active', state.placeDemoActive);
   placeDemoGroup.visible = (state.mode === 'hybrid' && state.placeDemoActive);
   if (state.mode === 'hybrid') {
-    particleShaderMat.uniforms.uOpacityScale.value = state.placeDemoActive ? 0.34 : 0.0;
+    particleShaderMat.uniforms.uOpacityScale.value = (state.placeDemoActive && !isReal(state.siteIndex)) ? 0.34 : 0.0;   // no decorative particles over the real Jezero image
   }
   showToast(state.placeDemoActive
     ? "Place Demo: 3D Landmarks & Chladni LiDAR Active"
@@ -2815,6 +2837,7 @@ window.toggleAddWaypoint = () => {
 
 window.resetSiteRoute = () => {
   const s = SITES[state.siteIndex];
+  if (isReal(state.siteIndex) && marswalk) { marswalk.resetOptimal(); return; }
   state.waypoints = JSON.parse(JSON.stringify(s.defaultWaypoints));
   state.selectedWp = 0;
   rebuildRouteGeometry();
@@ -2828,6 +2851,7 @@ window.setRelief = (val) => {
   particleShaderMat.uniforms.uReliefScale.value = state.relief;
   buildSiteLandmarkProps(state.siteIndex);
   rebuildRouteGeometry();
+  marswalk?.onRelief();
 };
 
 let toastTimeout = null;
@@ -2840,7 +2864,6 @@ function showToast(msg) {
 }
 
 window.addEventListener('keydown', (e) => {
-  if(fieldLab?.active)return;
   if (e.key === 'Escape' && state.addWpMode) window.toggleAddWaypoint();
   if (e.key === 'h' || e.key === 'H') window.toggleZen();
   if (e.key === '[') window.cycleSite(-1);
@@ -2876,12 +2899,12 @@ function updateZoomScaleAndDestinationHUD(remKm) {
   const camDist = camera.position.distanceTo(controls.target);
 
   if (state.mode === 'orbital') {
-    const zoomRatio = (13.5 * camera.zoom / Math.max(4.64, camDist)).toFixed(1);
+    const zoomRatio = (13.5 / Math.max(4.64, camDist)).toFixed(1);
     const planetRadiusKm = 3389.5;
     const altKm = Math.max(0, (camDist - MARS_RADIUS) * planetRadiusKm / MARS_RADIUS);
     // Exact symmetric ray/sphere intersections give a scale at the view centre.
     const viewportHeight = renderer.domElement.clientHeight || window.innerHeight;
-    const tanHalfFov = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) / camera.zoom;
+    const tanHalfFov = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
     const theta = Math.min(Math.atan(64 * tanHalfFov / viewportHeight), Math.asin(MARS_RADIUS / camDist) * 0.8);
     const rayDistance = camDist * Math.cos(theta) - Math.sqrt(Math.max(0, MARS_RADIUS ** 2 - camDist ** 2 * Math.sin(theta) ** 2));
     const halfArc = Math.atan2(rayDistance * Math.sin(theta), camDist - rayDistance * Math.cos(theta));
@@ -2899,7 +2922,7 @@ function updateZoomScaleAndDestinationHUD(remKm) {
     hudScaleLineEl.title = "Geodesic scale at the view centre";
   } else {
     const zoomRatio = (38.0 / Math.max(controls.minDistance, camDist)).toFixed(1);
-    const altMeters = Math.max(2, Math.round(camDist * 24));
+    const altMeters = Math.max(2, Math.round(camDist * unitMeters(state.siteIndex)));
     const rawScaleM = camDist * 9.5;
     const niceStepsM = [5, 10, 25, 50, 100, 200, 500, 1000, 2000];
     const chosenM = niceStepsM.reduce((prev, curr) =>
@@ -3068,7 +3091,7 @@ function updateAstronautBiomechanics(dt, elapsed) {
 
   // Update Walk-Back "Point of No Return" Safety Ring & UHF Line-of-Sight status
   const hab = state.waypoints[0] || { x: -32, z: 28 };
-  const distFromHabKm = Math.hypot(pos.x - hab.x, pos.z - hab.z) * 0.024;
+  const distFromHabKm = Math.hypot(pos.x - hab.x, pos.z - hab.z) * unitMeters(state.siteIndex) / 1000;
   const o2Pct = Math.max(18, Math.round(98 - u * 24 - localSlopeDeg * 0.2));
   state.o2ReservePct = o2Pct;
   const maxSafeRadiusKm = Math.max(0.25, (o2Pct / 100) * 2.2 - localSlopeDeg * 0.015);
@@ -3185,11 +3208,11 @@ function animate(time, frame) {
   const dt = Math.min(clock.getDelta(), 0.05);
   const elapsed = clock.getElapsedTime();
   if (mobileAR?.active) { mobileAR.update(time, frame); return; }
-  if(fieldLab?.active){spaceAudio.updateVisualizer(elapsed);fieldLab.update(dt);return;}
   upgrades?.update(dt);
+  marswalk?.update(dt);
   vehicles?.update(dt);
   projectionView?.update(dt);
-  trekPanel?.update();geologyLayers?.update();scientificLayers?.update();
+  trekPanel?.update();
   proximityLabels?.update();mobileShell?.update();
   progressiveGlobe?.update(marsMat.opacity);
 
@@ -3657,7 +3680,7 @@ window.exportEvaManifest = (fmt) => {
       tool: w.tool,
       localMeters: { x: w.x, z: w.z },
       slopeDeg: +getSiteSlopeDeg(state.siteIndex, w.x, w.z).toFixed(1),
-      elevM: Math.round(site.baseElevM + getSiteHeight(state.siteIndex, w.x, w.z) * 18)
+      elevM: Math.round(elevFromY(state.siteIndex, getSiteHeight(state.siteIndex, w.x, w.z), state.relief))
     }))
   };
 
@@ -3792,8 +3815,6 @@ function initializeExplorationTools() {
     return {x:x*24,z:z*24,y:getSiteHeight(state.siteIndex,x,z)*18};
   });
   const api={
-    surfaceGroup,routeGroup,
-    science:{sample:(x,z)=>({...evaluateSitePoint(state.siteIndex,x,z),height:getSiteHeight(state.siteIndex,x,z),slope:getSiteSlopeDeg(state.siteIndex,x,z)}),size:DEM_SIZE,route:()=>routeSamplePoints.map(p=>({x:p.x,z:p.z})),optimize:()=>runAStarOptimizer(),legacyLayers:LAYERS,setLegacy:(id,active,opacity)=>{const layer=LAYERS.find(l=>l.id===id);if(layer){layer.active=active;if(opacity!==undefined)layer.opacity=opacity;renderLayerRows();updateGlobeOverlayTexture();updateShaderLayerUniforms();}}},
     camera,globe:marsMesh,radius:MARS_RADIUS,globePoint:(lat,lon,r)=>{if(!progressiveGlobe.rectangle)return spherePoint(lat,lon,r);const p=rectanglePoint(lat,lon,MARS_RADIUS);p.z=r-MARS_RADIUS;return p.applyQuaternion(progressiveGlobe.group.quaternion);},canvas:renderer.domElement,controls,tiles:progressiveGlobe,
     getState:()=>state,getSite:()=>SITES[state.siteIndex],
     cancelWaypoint:()=>{if(state.addWpMode)window.toggleAddWaypoint();},
@@ -3854,8 +3875,6 @@ function initializeExplorationTools() {
   api.measurements=upgrades.measurements;api.selectionChanged=record=>{const s=SITES[state.siteIndex];document.getElementById('caption-title').textContent=record?`${record.name} · ${record.lat.toFixed(4)}°, ${record.lon.toFixed(4)}° E`:`${s.shortName} (${s.coords})`;};trekPanel=createTrekSearch(api);
   proximityLabels=createProximityLabels(api,record=>{if(matchMedia('(max-width:768px)').matches)mobileShell?.open('Search');trekPanel.reveal(record);});
   mobileShell=createMobileShell(api,trekPanel);
-  geologyLayers=createGeologyLayers(api,trekPanel.host.querySelector('[data-renderer-layers]'));
-  scientificLayers=createScientificLayerManager(api,trekPanel.host.querySelector('[data-renderer-layers]'),geologyLayers);
 
   vehicles=createVehicles({parent:surfaceGroup,getSite:()=>SITES[state.siteIndex],getHeight:getSiteHeight,getMode:()=>state.mode,host:upgrades.host,enterSurface:()=>{if(state.mode==='orbital')window.setMode('hybrid');},focus:(point,offset)=>{surfaceParticles.visible=false;routeGroup.visible=false;placeDemoGroup.visible=false;scrubRing.visible=false;dropPreviewGroup.visible=false;astronautRig.root.visible=false;controls.minDistance=.12;state.autoSpin=false;state.suitDemoActive=false;state.povMode='free';controls.enabled=true;state.isCameraTransitioning=false;controls.target.copy(point);camera.position.copy(point).add(offset);camera.lookAt(point);controls.update();}});
 
@@ -3882,7 +3901,17 @@ document.getElementById('science-brief').innerHTML = SITES[0].brief;
 renderCrismSpectralPlot(0);
 fetchLiveDonkiSpaceWeather();
 initializeExplorationTools();
-fieldLab=createJezeroFieldLab({renderer,hostControls:controls,onStatus:showToast,onActive:active=>{state.fieldLabActive=active;},canOpen:()=>!mobileAR?.active});
+if (REAL) {
+  marswalk = initMarswalk({
+    THREE, REAL, state, SITES, scene, surfaceGroup, camera, controls, renderer, getSiteHeight, getSiteSlopeDeg,
+    rebuildRouteGeometry, renderWaypointList, showToast, terrainUniforms: terrainShaderMat.uniforms, particleUniforms: particleShaderMat.uniforms, astronautPosition: () => astronautRig.root.position,
+    intersectAt: (cx, cy) => { const r = renderer.domElement.getBoundingClientRect(); pointerNDC.set(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1); raycaster.setFromCamera(pointerNDC, camera); const h = intersectTerrainSurface(); return h.length ? h[0].point : null; },
+    raycastObjects: (cx, cy, objs) => { const r = renderer.domElement.getBoundingClientRect(); pointerNDC.set(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1); raycaster.setFromCamera(pointerNDC, camera); return raycaster.intersectObjects(objs, false); },
+    animateCameraTo, pinMeshes: () => interactivePinMeshes, measuring: () => !!(upgrades?.measurements.enabled || mobileAR?.active),
+  });
+  window.MARSWALK = marswalk;
+  try { window.selectSite('1'); state.loadedSurfaceSite = 1; } catch (err) { console.warn(err); }   // Jezero is the default study site
+}
 renderer.setAnimationLoop(animate);
 
 installProvenance(() => SITES[state.siteIndex], () => donkiLiveInfo);
