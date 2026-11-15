@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {interpolate} from './geodesy.js?v=trek1';
+import {interpolate} from './geodesy.js?v=mission2';
 export function createSearchMarkers(api){
  const group=new THREE.Group(),pins=new THREE.Group(),bounds=new THREE.Group(),paths=new THREE.Group();group.name='search-pois';group.add(pins,bounds,paths);api.globe.add(group);group.visible=false;
  const canvas=document.createElement('canvas');canvas.width=canvas.height=48;const c=canvas.getContext('2d');c.beginPath();c.arc(24,24,13,0,Math.PI*2);c.fillStyle='#ffffff';c.fill();c.lineWidth=5;c.strokeStyle='#20170a';c.stroke();const texture=new THREE.CanvasTexture(canvas);

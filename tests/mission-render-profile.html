@@ -1,0 +1,14 @@
+<!doctype html><meta charset="utf-8"><title>ARES renderer profile</title><style>body{background:#10131b;color:#eee;font:14px system-ui}canvas{width:640px;height:480px}pre{white-space:pre-wrap}</style>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script>
+<h1>Renderer CPU submission profile</h1><p>Deterministic synthetic checker tiles; not NASA data. Same 180-frame zoom path, fixed 640×480 viewport, 1× pixel ratio. CPU timings are not GPU completion time or presentation-frame intervals; submissions run in batches. Network and full-app shaders excluded.</p><pre id="result">Running previous sequential renderer and direct LOD renderer…</pre>
+<script type="module">
+import * as THREE from 'three';
+import {MarsQuadtreeGlobe as Baseline} from './fixtures/trek-sequential-globe.js';
+import {MarsQuadtreeGlobe as Optimized} from '../js/mars-quadtree-globe.js';
+const renderer=new THREE.WebGLRenderer({antialias:false});renderer.setSize(640,480);renderer.setPixelRatio(1);document.body.append(renderer.domElement);
+const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const ctx=canvas.getContext('2d');ctx.fillStyle='#ab6543';ctx.fillRect(0,0,256,256);ctx.fillStyle='#d5a47b';ctx.fillRect(0,0,128,128);const src=canvas.toDataURL();
+function image(){const img=document.createElement('canvas');img.width=img.height=256;img.getContext('2d').drawImage(canvas,0,0);Object.defineProperty(img,'src',{set(v){if(v)queueMicrotask(()=>img.onload?.());}});return img;}
+const percentile=(a,p)=>a.slice().sort((a,b)=>a-b)[Math.floor((a.length-1)*p)];
+async function profile(Type){const scene=new THREE.Scene(),parent=new THREE.Group();scene.add(parent);const camera=new THREE.PerspectiveCamera(42,640/480,.01,100);let time=0;const q=new Type({parent,camera,renderer,createImage:image,now:()=>time});const cpu=[],intervals=[];let previous=performance.now();for(let i=0;i<180;i++){await Promise.resolve();if(i%30===0)await new Promise(resolve=>setTimeout(resolve,0));const stamp=performance.now();if(i>20)intervals.push(stamp-previous);previous=stamp;time+=50;const t=i/179,d=4.64+10*Math.pow(1-t,3);camera.position.set(-d*.85,d*.3,d*.43);camera.lookAt(0,0,0);camera.updateMatrixWorld();const start=performance.now();q.update(1);renderer.render(scene,camera);if(i>20)cpu.push(performance.now()-start);}const result={cpuMedianMs:percentile(cpu,.5),cpuP95Ms:percentile(cpu,.95),nodes:q.nodes.size,textures:q.cache.size,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles};q.dispose();return result;}
+try{const baseline=await profile(Baseline),optimized=await profile(Optimized);document.querySelector('#result').textContent=JSON.stringify({baseline,optimized,warning:'Single synthetic run; no universal frame-rate guarantee.'},null,2);}catch(e){document.querySelector('#result').textContent='FAIL: '+e.stack;}
+</script>

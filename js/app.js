@@ -1,19 +1,21 @@
-import { pickReferenceMap } from './map-picking.js?v=trek1';
-import { createTrekSearch } from './trek-search.js?v=trek1';
-import { createVehicles } from './vehicles.js?v=trek1';
-import { createProjectionController } from './projections.js?v=trek1';
-import { fetchDonkiCatalog, installProvenance } from './official-data.js?v=trek1';
-import { MarsQuadtreeGlobe, spherePoint, rectanglePoint } from './mars-quadtree-globe.js?v=trek1';
-import { createWorkbench } from './exploration-workbench.js?v=trek1';
-import { createMobileAR } from './ar-mobile.js?v=trek1';
-import { destination } from './geodesy.js?v=trek1';
-import { bindControls } from './controls.js?v=trek1';
+import {createProximityLabels} from './proximity-labels.js?v=mission2';
+import {createMobileShell} from './mobile-shell.js?v=mission2';
+import { pickReferenceMap } from './map-picking.js?v=mission2';
+import { createTrekSearch } from './trek-search.js?v=mission2';
+import { createVehicles } from './vehicles.js?v=mission2';
+import { createProjectionController } from './projections.js?v=mission2';
+import { fetchDonkiCatalog, installProvenance } from './official-data.js?v=mission2';
+import { MarsQuadtreeGlobe, spherePoint, rectanglePoint } from './mars-quadtree-globe.js?v=mission2';
+import { createWorkbench } from './exploration-workbench.js?v=mission2';
+import { createMobileAR } from './ar-mobile.js?v=mission2';
+import { destination } from './geodesy.js?v=mission2';
+import { bindControls } from './controls.js?v=mission2';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { createSpaceAudioEngine } from './audio.js?v=trek1';
-import { SITES, LAYERS } from './data.js?v=trek1';
-import { hash2, valueNoise, fbm, ridgedFbm } from './noise.js?v=trek1';
-import { GLSL_PARTICLE_VERTEX_SHADER, GLSL_PARTICLE_FRAGMENT_SHADER, GLSL_SPARKLE_VERTEX_SHADER, GLSL_SPARKLE_FRAGMENT_SHADER, GLSL_TERRAIN_VERTEX_SHADER, GLSL_TERRAIN_FRAGMENT_SHADER } from './shaders.js?v=trek1';
+import { createSpaceAudioEngine } from './audio.js?v=mission2';
+import { SITES, LAYERS } from './data.js?v=mission2';
+import { hash2, valueNoise, fbm, ridgedFbm } from './noise.js?v=mission2';
+import { GLSL_PARTICLE_VERTEX_SHADER, GLSL_PARTICLE_FRAGMENT_SHADER, GLSL_SPARKLE_VERTEX_SHADER, GLSL_SPARKLE_FRAGMENT_SHADER, GLSL_TERRAIN_VERTEX_SHADER, GLSL_TERRAIN_FRAGMENT_SHADER } from './shaders.js?v=mission2';
 
 // 1. CHLADNI-PLATE AUTONOMOUS CYMATIC STANDING-WAVE GPU SHADERS
 //    C(x, z) = a * sin(PI * n * x) * sin(PI * m * z) + b * sin(PI * m * x) * sin(PI * n * z)
@@ -61,7 +63,7 @@ let mobileAR = null;
 let vehicles = null;
 let progressiveGlobe = null;
 let projectionView = null;
-let trekPanel = null;
+let trekPanel = null, proximityLabels = null, mobileShell = null;
 let survivalSavedRoute = null;
 const MOBILE = matchMedia('(max-width: 767px)').matches;
 
@@ -3178,6 +3180,7 @@ function animate(time, frame) {
   vehicles?.update(dt);
   projectionView?.update(dt);
   trekPanel?.update();
+  proximityLabels?.update();mobileShell?.update();
   progressiveGlobe?.update(marsMat.opacity);
 
   particleShaderMat.uniforms.uTime.value = elapsed;
@@ -3721,6 +3724,7 @@ window.dismissLaunchOverlay = (withAudio = false) => {
   ov.classList.add('dismissed');
 
   if (withAudio) {
+    void spaceAudio.unlockAudioContext();
     spaceAudio.initAudio();
     spaceAudio.playQuindarTone(true);
     spaceAudio.triggerMorphSound(3, 7);
@@ -3836,6 +3840,8 @@ function initializeExplorationTools() {
   upgrades=createWorkbench(api);
   api.syncLayer=key=>{upgrades.host.querySelector('[data-globe-layer]').value=key;};api.setOrbiters=show=>{const visible=show&&!progressiveGlobe.rectangle;for(const sat of satellites){sat.body.parent.visible=visible;for(const o of orbitalGroup.children)if(o.geometry===sat.beamGeo)o.visible=visible;}};
   api.measurements=upgrades.measurements;api.selectionChanged=record=>{const s=SITES[state.siteIndex];document.getElementById('caption-title').textContent=record?`${record.name} · ${record.lat.toFixed(4)}°, ${record.lon.toFixed(4)}° E`:`${s.shortName} (${s.coords})`;};trekPanel=createTrekSearch(api);
+  proximityLabels=createProximityLabels(api,record=>{if(matchMedia('(max-width:768px)').matches)mobileShell?.open('Search');trekPanel.reveal(record);});
+  mobileShell=createMobileShell(api,trekPanel);
 
   vehicles=createVehicles({parent:surfaceGroup,getSite:()=>SITES[state.siteIndex],getHeight:getSiteHeight,getMode:()=>state.mode,host:upgrades.host,enterSurface:()=>{if(state.mode==='orbital')window.setMode('hybrid');},focus:(point,offset)=>{surfaceParticles.visible=false;routeGroup.visible=false;placeDemoGroup.visible=false;scrubRing.visible=false;dropPreviewGroup.visible=false;astronautRig.root.visible=false;controls.minDistance=.12;state.autoSpin=false;state.suitDemoActive=false;state.povMode='free';controls.enabled=true;state.isCameraTransitioning=false;controls.target.copy(point);camera.position.copy(point).add(offset);camera.lookAt(point);controls.update();}});
 

@@ -1,0 +1,44 @@
+{
+  "checks": {
+    "regression-results": {
+      "passed": 46,
+      "total": 46
+    },
+    "navigation-tests": {
+      "passed": 28,
+      "total": 28
+    },
+    "direct-tests": {
+      "passed": 18,
+      "total": 18
+    },
+    "gpu-tests": {
+      "passed": 2,
+      "total": 2
+    },
+    "audio-tests": {
+      "passed": 6,
+      "total": 6
+    }
+  },
+  "passed": 100,
+  "total": 100,
+  "mobile": {
+    "viewport": [
+      390,
+      844
+    ],
+    "headerHeight": 48,
+    "unobstructedPercent": 79.75102657216594,
+    "headerAndDockMinimumButtonHeight": 44,
+    "mutedStartup": "Audio Off observed",
+    "audioOnOff": "running context and UI transitions observed",
+    "exclusiveSheets": "More closed when profile drawer opened",
+    "nearbySourceCard": "Bradbury Landing linked to NASA Curiosity mission map and labeled approximate"
+  },
+  "limits": [
+    "Synthetic timing excludes network transfer.",
+    "CPU submission profile excludes GPU completion and full-scene shaders.",
+    "Physical phone speakers, device mute switch and WebXR hardware were not certified."
+  ]
+}

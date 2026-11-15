@@ -1,0 +1,25 @@
+{
+  "passed": 2,
+  "total": 2,
+  "results": [
+    {
+      "name": "Async ImageBitmap preserves north-up tile orientation",
+      "passed": true
+    },
+    {
+      "name": "Real pin material draws over foreground transparent tile imagery",
+      "passed": true,
+      "sample": [
+        248,
+        12,
+        4,
+        255
+      ],
+      "expectedLinearRGB": [
+        248,
+        12,
+        4
+      ]
+    }
+  ]
+}

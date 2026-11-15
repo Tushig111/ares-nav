@@ -1,22 +1,23 @@
 import * as THREE from 'three';
-import { MARS, validatePoint, wrapLongitude, planetographicLatitude, pathMetrics, interpolate, toMarsGeoJSON } from './geodesy.js?v=trek1';
+import { MARS, validatePoint, wrapLongitude, planetographicLatitude, pathMetrics, interpolate, toMarsGeoJSON } from './geodesy.js?v=mission2';
 export function createMeasurementTools(api, host) {
-  const group=new THREE.Group();api.globe.add(group);
+  const group=new THREE.Group();api.tiles.group?.add(group)||api.globe.add(group);
+  const badges=document.createElement('div');badges.className='pin-badges';badges.setAttribute('aria-label','Map measurement pins');document.body.append(badges);
   const activePointers=new Set();
   let points=[],redo=[],mode='inspect',enabled=false,east360=false,down=null,savedAutoSpin=false;
   const output=host.querySelector('[data-measure-output]');
   const panel=host.querySelector('[data-vertices]');
-  const spherical=p=>api.globePoint(p.lat,p.lon,api.radius+.025);
+  const spherical=p=>{const v=api.globePoint(p.lat,p.lon,api.radius+.004);return api.tiles.rectangle?v.applyQuaternion(api.tiles.group.quaternion.clone().invert()):v;};
   function clearGeometry(){while(group.children.length){const o=group.children.pop();o.parent=null;o.geometry?.dispose();o.material?.dispose();}}
   function render(){
-    clearGeometry();group.visible=api.getState().mode==='orbital';
+    clearGeometry();badges.replaceChildren();group.visible=api.getState().mode==='orbital';
     const coords=points.map(spherical);
-    for(const p of coords){const dot=new THREE.Mesh(new THREE.SphereGeometry(.025,8,6),new THREE.MeshBasicMaterial({color:0xfbbf24,depthTest:false}));dot.userData.marker=true;dot.position.copy(p);group.add(dot);}
+    for(const [i,p]of coords.entries()){const dot=new THREE.Mesh(new THREE.SphereGeometry(1,10,8),new THREE.MeshBasicMaterial({color:i%2?0x38bdf8:0xfc3d21,depthTest:false,depthWrite:false,transparent:true}));dot.renderOrder=999;dot.userData.marker=true;dot.position.copy(p);group.add(dot);const badge=document.createElement('span');badge.className='pin-badge';badge.textContent=`PIN ${String(i+1).padStart(2,'0')}`;if(i)badge.textContent+=' · '+(pathMetrics(points.slice(i-1,i+1)).surface/1000).toFixed(3)+' km';badges.append(badge);}
     if(points.length>1){const line=[];const count=points.length-1+(mode==='polygon'?1:0);
       try{for(let i=0;i<count;i++)for(let j=0;j<=32;j++)line.push(spherical(interpolate(points[i],points[(i+1)%points.length],j/32)));}catch(error){output.textContent=error.message;return;}
       const plotted=[];if(api.tiles.rectangle)for(let i=1;i<line.length;i++){if(line[i].distanceTo(line[i-1])<api.radius*2)plotted.push(line[i-1],line[i]);}
       const LineType=api.tiles.rectangle?THREE.LineSegments:THREE.Line;
-      const mesh=new LineType(new THREE.BufferGeometry().setFromPoints(api.tiles.rectangle?plotted:line),new THREE.LineBasicMaterial({color:0xfbbf24,depthTest:false}));group.add(mesh);
+      const mesh=new LineType(new THREE.BufferGeometry().setFromPoints(api.tiles.rectangle?plotted:line),new THREE.LineBasicMaterial({color:0xfbbf24,depthTest:false,depthWrite:false,transparent:true}));mesh.renderOrder=998;mesh.material.depthWrite=false;group.add(mesh);
     }
     panel.replaceChildren();
     points.forEach((p,i)=>{const row=document.createElement('div');row.className='vertex-row';
@@ -55,5 +56,17 @@ export function createMeasurementTools(api, host) {
   api.canvas.addEventListener('pointercancel',e=>{activePointers.delete(e.pointerId);down=null;},true);
   addEventListener('keydown',e=>{if(e.key==='Escape'&&enabled){enabled=false;host.querySelector('[data-measure-enable]').checked=false;api.controls.enabled=true;api.getState().autoSpin=savedAutoSpin;}});
   addEventListener('hashchange',restore);restore();render();
-  return {activate(next='line',value=true){api.ensureOrbital?.();mode=next;host.querySelector('[data-measure-mode]').value=next;const box=host.querySelector('[data-measure-enable]');box.checked=value;box.dispatchEvent(new Event('change'));render();},clear(){points=[];redo=[];render();},refresh:render,update(){if(api.camera?.isOrthographicCamera){const size=(api.camera.top-api.camera.bottom)/api.camera.zoom/(api.canvas.clientHeight||800)*5/.025;for(const dot of group.children)if(dot.userData.marker)dot.scale.setScalar(size);}else for(const dot of group.children)if(dot.userData.marker)dot.scale.setScalar(1);group.visible=api.getState().mode==='orbital';},get enabled(){return enabled;},snapshot(){return {points:points.map(p=>({...p})),mode};}};
+  return {activate(next='line',value=true){api.ensureOrbital?.();mode=next;host.querySelector('[data-measure-mode]').value=next;const box=host.querySelector('[data-measure-enable]');box.checked=value;box.dispatchEvent(new Event('change'));render();},clear(){points=[];redo=[];render();},refresh:render,update(){
+    group.visible=api.getState().mode==='orbital';badges.hidden=!group.visible;
+    if(!group.visible||!api.camera)return;
+    group.updateWorldMatrix(true,true);api.camera.updateMatrixWorld();const camera=api.camera,h=api.canvas.clientHeight||800,w=api.canvas.clientWidth||h;
+    let i=0;for(const dot of group.children)if(dot.userData.marker){
+      const world=dot.getWorldPosition(new THREE.Vector3()),localCamera=api.globe.worldToLocal(camera.getWorldPosition(new THREE.Vector3()));
+      const p=world.clone().project(camera),local=api.globe.worldToLocal(world.clone());
+      const front=api.tiles.rectangle||(camera.isOrthographicCamera?local.normalize().dot(camera.getWorldDirection(new THREE.Vector3()).negate().transformDirection(api.globe.matrixWorld.clone().invert()))>0:local.dot(localCamera)>api.radius*api.radius);
+      dot.visible=front&&Math.abs(p.x)<=1&&Math.abs(p.y)<=1&&p.z>=-1&&p.z<=1;
+      const depth=Math.abs(camera.worldToLocal(world.clone()).z),units=camera.isOrthographicCamera?(camera.top-camera.bottom)/camera.zoom/h:2*depth*Math.tan(THREE.MathUtils.degToRad(camera.fov/2))/h;
+      dot.scale.setScalar(Math.max(.0000001,units*5));const badge=badges.children[i++];if(badge){badge.hidden=!dot.visible;badge.style.transform=`translate(${(p.x+1)*w/2+9}px,${(1-p.y)*h/2-24}px)`;}
+    }
+  },get enabled(){return enabled;},snapshot(){return {points:points.map(p=>({...p})),mode};}};
 }

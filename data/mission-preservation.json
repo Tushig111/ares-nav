@@ -1,0 +1,9 @@
+{
+  "originalHtmlIdsRetained": true,
+  "modelsAndVendorByteIdentical": true,
+  "protectedModulesByteIdentical": {
+    "vehicles.js": true,
+    "ar-mobile.js": true,
+    "shaders.js": true
+  }
+}

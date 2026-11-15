@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 
 export const AUTO_CTX_LEVEL = 7;
-export const FADE_MS = 220;
+export const FADE_MS = 90;
+export const MAX_CONCURRENT_LOADS = 12;
 export const LAYERS = {
   optical: { name: 'Viking Color', id: 'Mars_Viking_MDIM21_ClrMosaic_global_232m', max: 7, size: 256, ext: 'jpg', nativeMeters: 232 },
   ctx: { name: 'MRO CTX High-Res', id: 'CTX_beta01_uncontrolled_5m_Caltech', max: 11, size: 512, ext: 'png', nativeMeters: 5 },
@@ -31,12 +32,17 @@ export function inheritedUV(child, ancestor) {
 }
 
 export class MarsQuadtreeGlobe {
-  constructor({ parent, camera, renderer, radius = 4.6, onStatus = () => {}, now = () => performance.now(), createImage = () => new Image() }) {
-    Object.assign(this, { parent, camera, renderer, radius, onStatus, now, createImage });
+  constructor({ parent, camera, renderer, radius = 4.6, onStatus = () => {}, now = () => performance.now(), createImage = null, directLOD = true }) {
+    Object.assign(this, { parent, camera, renderer, radius, onStatus, now });
+    this.createImage = createImage || (() => new Image());
+    this.directLOD=directLOD;
+    this.useBitmap = !createImage && typeof createImageBitmap === 'function';
+    this.fastNodes = new Map(); this.fastWanted = new Set(); this.cursor = new THREE.Vector2(); this.cursorUntil = 0;
+    renderer.domElement?.addEventListener?.('wheel', event => { const r=renderer.domElement.getBoundingClientRect(); this.cursor.set((event.clientX-r.left)/r.width*2-1,-(event.clientY-r.top)/r.height*2+1); this.cursorUntil=this.now()+900; this.invalidate(); }, {capture:true,passive:true});
     this.group = new THREE.Group(); parent.add(this.group);
     this.nodes = new Map(); this.cache = new Map(); this.pending = new Map(); this.failed = new Map(); this.queue = new Map();
     this.pins = new Set(); this.reservations = new Map(); this.uploadQueue = [];
-    this.active = 0; this.externalSlots = 0; this.maxConcurrent = 12; this.maxTextures = 220;
+    this.active = 0; this.externalSlots = 0; this.maxConcurrent = MAX_CONCURRENT_LOADS; this.maxTextures = 220;
     this.layer = 'optical'; this.autoCTX = true; this.level = 1; this.tick = 0; this.lastUpdate = -Infinity; this.dirty = true;
     this.lastUpload = -Infinity; this.metrics = { lodMs: 0, uploadMs: 0, uploaded: 0, visited: 0 };
     this.scratchWorld = new THREE.Vector3(); this.scratchSphere = new THREE.Sphere();
@@ -52,7 +58,7 @@ export class MarsQuadtreeGlobe {
     this.rectangle = rectangle;
     if (rectangle) this.group.quaternion.copy(this.parent.getWorldQuaternion(new THREE.Quaternion())).invert();
     else this.group.quaternion.identity();
-    for (const node of this.nodes.values()) if (node.mesh) {
+    for (const node of [...this.nodes.values(), ...this.fastNodes.values()]) if (node.mesh) {
       node.mesh.geometry.dispose(); node.mesh.geometry = this.buildGeometry(node);
     }
     this.invalidate();
@@ -61,12 +67,12 @@ export class MarsQuadtreeGlobe {
   sourceLayer(z) { return this.layer === 'optical' && this.autoCTX && z >= AUTO_CTX_LEVEL ? 'ctx' : this.layer; }
   key(layer, z, row, col) { return `${layer}/${z}/${row}/${col}`; }
   nodeKey(node) { return this.key(this.sourceLayer(node.z), node.z, node.row, node.col); }
-  invalidate() { this.lastUpdate = -Infinity; }
+  invalidate() { this.dirty = true; }
   setLayer(layer) {
     if (!LAYERS[layer]) return false;
     if (LAYERS[layer].unavailable) { this.noticeUntil = this.now() + 6000; return false; }
     if (layer !== this.layer) {
-      this.layer = layer; this.reservations.clear();
+      this.layer = layer; this.reservations.clear(); this.fastWanted.clear(); for(const n of this.fastNodes.values()) if(n.mesh)n.mesh.visible=false;
       for (const node of this.nodes.values()) { node.split = false; node.transition = null; node.sourceFade = null; if (node.z > 1) this.hide(node); }
       this.invalidate();
     }
@@ -150,11 +156,11 @@ export class MarsQuadtreeGlobe {
     for (const set of this.reservations.values()) for (const key of set) claimed.add(key);
     for (const key of keys) claimed.add(key);
     // Reserve a complete sibling group, rather than pinning hundreds of incomplete splits.
-    if (claimed.size > this.maxTextures) return false;
+    if (claimed.size > this.maxTextures - (this.directLOD ? 8 : 0)) return false;
     this.reservations.set(node.key, keys); return true;
   }
   protectedKeys() {
-    const keys = new Set(this.pins);
+    const keys = new Set([...this.pins,...this.fastWanted]);
     for (const set of this.reservations.values()) for (const key of set) keys.add(key);
     return keys;
   }
@@ -162,7 +168,7 @@ export class MarsQuadtreeGlobe {
     if (this.cache.size <= target) return;
     const protectedKeys = this.protectedKeys();
     const candidates = [...this.cache].filter(([key]) => !protectedKeys.has(key)).sort((a, b) => a[1].used - b[1].used);
-    while (this.cache.size > target && candidates.length) { const [key, entry] = candidates.shift(); entry.texture.dispose(); this.cache.delete(key); }
+    while (this.cache.size > target && candidates.length) { const [key, entry] = candidates.shift(); this.disposeEntry(entry); this.cache.delete(key); }
   }
   pump() {
     const wanted = this.protectedKeys();
@@ -172,23 +178,57 @@ export class MarsQuadtreeGlobe {
       if (!wanted.has(job.key) || this.cache.has(job.key) || this.pending.has(job.key)) continue;
       this.evict(this.maxTextures - this.active - 1);
       if (this.cache.size + this.active >= this.maxTextures) break;
-      const image = this.createImage(); image.crossOrigin = 'anonymous'; this.active++;
-      let finished = false;
-      const finish = ok => {
-        if (finished) return; finished = true; clearTimeout(timer); image.onload = image.onerror = null;
-        this.active--; this.pending.delete(job.key);
-        if (ok && !this.disposed && this.protectedKeys().has(job.key)) {
-          const texture = new THREE.Texture(image); texture.colorSpace = THREE.SRGBColorSpace;
-          texture.minFilter = THREE.LinearFilter; texture.magFilter = THREE.LinearFilter; texture.generateMipmaps = false;
-          texture.anisotropy = Math.min(4, this.renderer.capabilities.getMaxAnisotropy());
-          const entry = { ...job, texture, used: this.tick, uploaded: false }; texture.needsUpdate = true;
-          this.cache.set(job.key, entry); this.uploadQueue.push(entry); this.dirty = true;
-        } else if (!ok) this.failed.set(job.key, this.now() + 30000);
-      };
-      const timer = setTimeout(() => { finish(false); image.src = ''; }, 12000);
-      image.onload = () => finish(true); image.onerror = () => finish(false);
-      this.pending.set(job.key, { image, cancel: () => { finish(false); image.src = ''; } }); image.src = tileURL(job.layer, job.z, job.row, job.col);
+      this.startLoad(job);
+
     }
+  }
+  disposeEntry(entry) { entry.texture.dispose(); entry.texture.image?.close?.(); }
+  startLoad(job) {
+    this.active++;let done=false,image=null;const controller=new AbortController(),started=this.now();
+    const finish=(source,bitmap=false)=>{
+      if(done){if(bitmap)source?.close?.();return;}done=true;clearTimeout(timer);if(image)image.onload=image.onerror=null;
+      this.active--;this.pending.delete(job.key);
+      if(source&&!this.disposed&&this.protectedKeys().has(job.key)){
+        const texture=new THREE.Texture(source);texture.colorSpace=THREE.SRGBColorSpace;texture.flipY=!bitmap;
+        texture.minFilter=texture.magFilter=THREE.LinearFilter;texture.generateMipmaps=false;
+        texture.anisotropy=Math.min(4,this.renderer.capabilities.getMaxAnisotropy());texture.needsUpdate=true;
+        const entry={...job,texture,used:this.tick,uploaded:false,loadMs:this.now()-started};
+        this.cache.set(job.key,entry);this.uploadQueue.push(entry);this.dirty=true;
+      }else{if(bitmap)source?.close?.();if(!source&&!this.disposed)this.failed.set(job.key,this.now()+30000);}
+    };
+    const timer=setTimeout(()=>{controller.abort();finish(null);if(image)image.src='';},12000);
+    const fallback=()=>{if(done)return;image=this.createImage();image.crossOrigin='anonymous';image.decoding='async';image.onload=()=>finish(image);image.onerror=()=>finish(null);image.src=tileURL(job.layer,job.z,job.row,job.col);};
+    this.pending.set(job.key,{cancel:()=>{controller.abort();finish(null);if(image)image.src='';}});
+    if(this.useBitmap)fetch(tileURL(job.layer,job.z,job.row,job.col),{signal:controller.signal,mode:'cors'}).then(r=>{if(!r.ok)throw Error('Tile HTTP '+r.status);return r.blob();}).then(blob=>createImageBitmap(blob,{imageOrientation:'flipY',premultiplyAlpha:'none'})).then(bitmap=>finish(bitmap,true)).catch(()=>{if(!done)fallback();});
+    else fallback();
+  }
+  // A bounded overlay requests the focal family at target z and z-1 immediately.
+  // It never hides the existing tree, so skipped, missing and transparent tiles retain coverage.
+  updateDirect(focusLat,focusLon,opacity,now,maxLevel) {
+    this.directBadge=null;this.fastWanted.clear();for(const n of this.fastNodes.values())if(n.mesh)n.mesh.visible=false;
+    if(!Number.isFinite(focusLat)||!Number.isFinite(focusLon)||Math.abs(focusLat)>90||Math.abs(focusLon)>180){this.targetLevel=1;return;}
+    const height=this.renderer.domElement.clientHeight||800;
+    const span=this.camera.isOrthographicCamera?(this.camera.top-this.camera.bottom)/this.camera.zoom:2*Math.max(.00001,this.camera.position.distanceTo(this.parent.getWorldPosition(new THREE.Vector3()))-this.radius)*Math.tan(THREE.MathUtils.degToRad(this.camera.fov/2));
+    const pixelsPerRadian=height*this.radius/Math.max(1e-8,span);
+    let target=1;for(let z=1;z<=maxLevel;z++)if(Math.PI/2**z*pixelsPerRadian>LAYERS[this.sourceLayer(z)].size*1.3)target=Math.min(maxLevel,z+1);
+    this.targetLevel=target;if(target<5)return;
+    const keep=new Set();
+    for(const z of [target,Math.max(1,target-1)]){
+      const at=tileAt(focusLat,focusLon,z),row=at.row&~1,col=at.col&~1,family=[];
+      for(let i=0;i<4;i++){
+        const r=row+(i>>1),c=col+(i%2),key=this.key(this.sourceLayer(z),z,r,c);keep.add(key);this.fastWanted.add(key);
+        let node=this.fastNodes.get(key);if(!node){node={...this.node(z,r,c),mesh:null,uniforms:null,children:null,target:null,base:null,opacity:0,fastStart:null};this.fastNodes.set(key,node);}
+        const entry=this.request(node,-1e8+(target-z)*100+i);let fallback=null;
+        for(let az=z-1;az>=1;az--){const d=2**(z-az),a=this.cache.get(this.key(this.sourceLayer(az),az,Math.floor(r/d),Math.floor(c/d)));if(this.valid(a)){fallback=this.reference(a,node);break;}}
+        if(node.target!==entry)node.fastStart=null;this.prepare(node,fallback,entry,true);family.push({node,fallback});
+      }
+      if(family.every(({node,fallback})=>node.ready&&fallback))for(const{node,fallback}of family){
+        if(node.fastStart==null)node.fastStart=now;node.opacity=Math.min(1,(now-node.fastStart)/FADE_MS);
+        this.appearance(node,fallback,opacity);node.mesh.visible=true;node.mesh.renderOrder=100+z;
+        const at=tileAt(focusLat,focusLon,z);if(node.opacity>=.99&&node.row===at.row&&node.col===at.col&&(!this.directBadge||z>this.directBadge.z))this.directBadge=node.target;
+      }
+    }
+    for(const[key,node]of this.fastNodes)if(!keep.has(key)){if(node.mesh){this.group.remove(node.mesh);node.mesh.geometry.dispose();node.mesh.material.dispose();}this.fastNodes.delete(key);}
   }
   upload() {
     // Spread GPU uploads over frames; img.onload alone is not a render-readiness signal.
@@ -201,7 +241,7 @@ export class MarsQuadtreeGlobe {
         if (this.renderer.getContext?.().isContextLost()) continue;
         entry.uploaded = true; this.dirty = true; uploaded++;
       } catch (error) {
-        this.cache.delete(entry.key); entry.texture.dispose(); this.failed.set(entry.key, this.now() + 30000);
+        this.cache.delete(entry.key); this.disposeEntry(entry); this.failed.set(entry.key, this.now() + 30000);
         console.warn('Tile upload failed; retaining coarse coverage.', error);
       }
       if (performance.now() - started >= 1.5) break;
@@ -296,7 +336,7 @@ export class MarsQuadtreeGlobe {
     const direction = this.camera.isOrthographicCamera ? this.camera.getWorldDirection(new THREE.Vector3()).negate().transformDirection(this.parent.matrixWorld.clone().invert()) : localCamera.clone().normalize();
     // Orthographic pan moves the ray origin, not its direction. Intersect that
     // ray with the actual surface to prioritize the viewport centre correctly.
-    const ray = new THREE.Raycaster(); ray.setFromCamera(new THREE.Vector2(), this.camera);
+    const ray = new THREE.Raycaster(); ray.setFromCamera(this.now()<this.cursorUntil?this.cursor:new THREE.Vector2(), this.camera);
     const localRay = ray.ray.clone().applyMatrix4(this.group.matrixWorld.clone().invert());
     const focus = this.rectangle ? localRay.intersectPlane(new THREE.Plane(new THREE.Vector3(0,0,1),0),new THREE.Vector3()) : localRay.intersectSphere(new THREE.Sphere(new THREE.Vector3(),this.radius),new THREE.Vector3());
     const focusLat = focus ? (this.rectangle ? focus.y / this.radius * 90 : THREE.MathUtils.radToDeg(Math.asin(THREE.MathUtils.clamp(focus.y/this.radius,-1,1)))) : 0;
@@ -409,7 +449,10 @@ export class MarsQuadtreeGlobe {
     for (const root of this.roots) if (this.valid(root.target)) drawPins.add(root.target.key);
     for (const key of this.reservations.keys()) if (!reservationsUsed.has(key)) this.reservations.delete(key);
     this.pins = drawPins;
+    if(this.directLOD)this.updateDirect(focus?focusLat:NaN,focus?focusLon:NaN,opacity,now,maxLevel);
+    for(const key of this.fastWanted)this.pins.add(key);
     this.evict(); this.pump(); this.prune();
+    if(this.directBadge&&this.directBadge.z>(badge?.z||0))badge=this.directBadge;
     this.level = badge?.z || 1; const source = badge?.layer || this.layer, l = LAYERS[source];
     const displayMeters = 2 * Math.PI * 3389500 / (2 ** (this.level + 1) * l.size);
     const label = badge ? `${l.name} L${this.level} · native ${l.nativeMeters} m/px · tile ~${Math.round(displayMeters)} m/px (equator)` : 'Loading initial NASA imagery…';
@@ -431,8 +474,8 @@ export class MarsQuadtreeGlobe {
   }
   dispose() {
     this.disposed = true; for (const request of [...this.pending.values()]) request.cancel();
-    for (const entry of this.cache.values()) entry.texture.dispose();
-    for (const node of this.nodes.values()) if (node.mesh) { node.mesh.geometry.dispose(); node.mesh.material.dispose(); }
+    for (const entry of this.cache.values()) this.disposeEntry(entry);
+    for (const node of [...this.nodes.values(),...this.fastNodes.values()]) if (node.mesh) { node.mesh.geometry.dispose(); node.mesh.material.dispose(); }
     this.placeholder.dispose(); this.parent.remove(this.group); this.cache.clear(); this.uploadQueue.length = 0;
   }
 }

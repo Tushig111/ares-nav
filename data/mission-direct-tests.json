@@ -1,0 +1,78 @@
+{
+  "passed": 18,
+  "total": 18,
+  "results": [
+    {
+      "name": "Gazetteer features carry the official IAU badge",
+      "passed": true
+    },
+    {
+      "name": "Supplied mission waypoints never receive an official badge",
+      "passed": true
+    },
+    {
+      "name": "Target L11 and L10 are requested on the first deep-zoom update",
+      "passed": true
+    },
+    {
+      "name": "Direct family remains bounded at eight keys and twelve active workers",
+      "passed": true
+    },
+    {
+      "name": "Pending target imagery never makes a placeholder overlay visible",
+      "passed": true
+    },
+    {
+      "name": "Ready target imagery becomes visible within 288ms with instant image delivery",
+      "passed": true
+    },
+    {
+      "name": "Fast overlay never hides the regular reference roots",
+      "passed": true
+    },
+    {
+      "name": "The configured temporal blend is 90ms",
+      "passed": true
+    },
+    {
+      "name": "Uploaded and in-flight textures remain within 220 entries",
+      "passed": true
+    },
+    {
+      "name": "global pins use the exact active projection transformer and a +0.004 offset",
+      "passed": true
+    },
+    {
+      "name": "global Add Pin creates an HTML badge for each recorded coordinate",
+      "passed": true
+    },
+    {
+      "name": "rectangle pins use the exact active projection transformer and a +0.004 offset",
+      "passed": true
+    },
+    {
+      "name": "rectangle Add Pin creates an HTML badge for each recorded coordinate",
+      "passed": true
+    },
+    {
+      "name": "north pins use the exact active projection transformer and a +0.004 offset",
+      "passed": true
+    },
+    {
+      "name": "north Add Pin creates an HTML badge for each recorded coordinate",
+      "passed": true
+    },
+    {
+      "name": "south pins use the exact active projection transformer and a +0.004 offset",
+      "passed": true
+    },
+    {
+      "name": "south Add Pin creates an HTML badge for each recorded coordinate",
+      "passed": true
+    },
+    {
+      "name": "Clear removes pin beacons and HTML badges together",
+      "passed": true
+    }
+  ]
+}

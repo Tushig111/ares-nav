@@ -1,0 +1,26 @@
+[
+  {
+    "name": "All four unlock gestures use passive capture listeners",
+    "passed": true
+  },
+  {
+    "name": "Silent unlock resumes context without starting ambient audio",
+    "passed": true
+  },
+  {
+    "name": "Explicit audio start initializes synthesizer and shows On",
+    "passed": true
+  },
+  {
+    "name": "Mute silences playback intent and shows Off",
+    "passed": true
+  },
+  {
+    "name": "Subsequent unlock preserves explicit mute",
+    "passed": true
+  },
+  {
+    "name": "Audio toggle resumes existing synthesizer",
+    "passed": true
+  }
+]

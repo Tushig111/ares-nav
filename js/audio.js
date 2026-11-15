@@ -8,6 +8,20 @@ export function createSpaceAudioEngine() {
   let isInitialized = false;
   let userVolume = 0.65;
   let lastTickTime = 0;
+  let unlocked=false;
+  function ensureContext(){
+    if(ctx&&ctx.state!=='closed')return ctx;
+    const AudioCtx=window.AudioContext||window.webkitAudioContext;if(!AudioCtx)return null;
+    ctx=new AudioCtx();ctx.addEventListener('statechange',syncAudioUI);return ctx;
+  }
+  function unlockAudioContext(){
+    const audio=ensureContext();if(!audio)return Promise.resolve(false);
+    // This is silent; ambient audio still requires the user's Audio / launch choice.
+    if(!unlocked||audio.state!=='running')try{const source=audio.createBufferSource();source.buffer=audio.createBuffer(1,1,audio.sampleRate);source.connect(audio.destination);source.start(0);unlocked=true;}catch{}
+    if(audio.state==='running')return Promise.resolve(true);
+    return audio.resume().then(()=>{syncAudioUI();return audio.state==='running';}).catch(()=>{syncAudioUI();return false;});
+  }
+  for(const type of ['pointerdown','touchstart','keydown','click'])window.addEventListener(type,()=>{if(!ctx||ctx.state!=='running')void unlockAudioContext();},{capture:true,passive:true});
   const dronePairs = [];
 
   const CHORD_PROGRESSIONS = [
@@ -34,13 +48,15 @@ export function createSpaceAudioEngine() {
 
   function initAudio() {
     if (isInitialized) return;
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (!AudioCtx) return;
-    ctx = new AudioCtx();
+    if(!ensureContext())return;
+    void unlockAudioContext();
 
     masterGain = ctx.createGain();
     masterGain.gain.setValueAtTime(userVolume * 0.44, ctx.currentTime);
 
+    const windBuffer=ctx.createBuffer(1,ctx.sampleRate*2,ctx.sampleRate),windData=windBuffer.getChannelData(0);
+    for(let i=0;i<windData.length;i++)windData[i]=(Math.random()*2-1)*.12;
+    const wind=ctx.createBufferSource();wind.buffer=windBuffer;wind.loop=true;wind.connect(masterGain);wind.start();
     lowpassFilter = ctx.createBiquadFilter();
     lowpassFilter.type = 'lowpass';
     lowpassFilter.frequency.setValueAtTime(520, ctx.currentTime);
@@ -159,21 +175,10 @@ export function createSpaceAudioEngine() {
   }
 
   function togglePlay() {
-    if (!isInitialized) {
-      initAudio();
-      playClickSFX('mode');
-      return;
-    }
-    if (ctx.state === 'suspended') {
-      ctx.resume();
-      isPlaying = true;
-    } else if (isPlaying) {
-      masterGain.gain.setTargetAtTime(0.0001, ctx.currentTime, 0.08);
-      isPlaying = false;
-    } else {
-      masterGain.gain.setTargetAtTime(userVolume * 0.44, ctx.currentTime, 0.12);
-      isPlaying = true;
-    }
+    if(!isInitialized){initAudio();playClickSFX('mode');return;}
+    isPlaying=!isPlaying;
+    if(isPlaying)void unlockAudioContext();
+    masterGain.gain.setTargetAtTime(isPlaying?userVolume*.44:.0001,ctx.currentTime,.08);
     syncAudioUI();
   }
 
@@ -317,7 +322,11 @@ export function createSpaceAudioEngine() {
     if (btn && lbl && group) {
       btn.classList.toggle('audio-active', isPlaying);
       group.classList.toggle('audio-playing', isPlaying);
-      lbl.textContent = isPlaying ? 'Audio: On' : 'Audio: Mute';
+      const running=isPlaying&&ctx?.state==='running';
+      lbl.textContent=isPlaying&&!running?'Audio: Tap to resume':running?'Audio: On':'Audio: Off';
+      btn.setAttribute('aria-pressed',String(running));
+      btn.dataset.audioState=ctx?.state||'uninitialized';
+      document.dispatchEvent(new CustomEvent('ares-audio-state',{detail:{playing:running,state:ctx?.state||'uninitialized'}}));
     }
   }
 
@@ -339,6 +348,8 @@ export function createSpaceAudioEngine() {
 
   return {
     initAudio,
+    unlockAudioContext,
+    get status(){return {initialized:isInitialized,playing:isPlaying,state:ctx?.state||'uninitialized'};},
     togglePlay,
     setVolume,
     playClickSFX,

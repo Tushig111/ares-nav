@@ -58,7 +58,10 @@ export function parseSearchCoordinates(text){
  if(Math.abs(lat)>90||Math.abs(lon)>360)throw new Error('Latitude must be −90..90; longitude −360..360 east-positive.');
  return {lat,lon:((lon+180)%360+360)%360-180};
 }
-export async function loadSearchCatalog(fetcher=fetch){
+let sharedSearchCatalog=null;
+export function landmarkBadge(record){return record.kind==='feature'&&String(record.id).startsWith('iau-')?'USGS / IAU · OFFICIAL':'STUDY ANCHOR · APPROX.';}
+export function loadSearchCatalog(fetcher=fetch){if(fetcher!==fetch)return readSearchCatalog(fetcher);return sharedSearchCatalog||(sharedSearchCatalog=readSearchCatalog(fetcher).catch(error=>{sharedSearchCatalog=null;throw error;}));}
+async function readSearchCatalog(fetcher){
  const files=['mars-features.json','mars-bookmarks.json','mars-layer-catalog.json','search-source-manifest.json'];
  const [features,bookmarks,layers,manifest]=await Promise.all(files.map(async name=>{const r=await fetcher(new URL('../data/'+name,import.meta.url));if(!r.ok)throw Error(`Catalog unavailable: ${name} (${r.status})`);return r.json();}));
  if(!Array.isArray(features)||features.some(f=>!Number.isFinite(f.lat)||!Number.isFinite(f.lon)||Math.abs(f.lat)>90))throw Error('Invalid Gazetteer snapshot');

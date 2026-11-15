@@ -31,3 +31,7 @@ The map selector now includes **Global Map (Rectangle)**: a full 2:1 longitude/l
 ## Search and navigation update
 
 See [TREK-NAVIGATION.md](TREK-NAVIGATION.md) for the official Gazetteer/catalog snapshots, curated bookmark provenance, four-map controls and measurement reference. The new browser checks are at [tests/trek-navigation.html](tests/trek-navigation.html).
+
+## Mission performance and phone update
+
+See [MISSION-UPGRADE.md](MISSION-UPGRADE.md) for direct LOD requests, visible pins, nearby landmark provenance, audio unlocking, the mobile bottom sheets and verification limits.

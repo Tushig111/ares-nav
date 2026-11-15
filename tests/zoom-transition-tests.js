@@ -9,7 +9,7 @@ export function runZoomTransitionTests() {
     let time = 0, uploadCalls = 0; const images = [];
     const camera = new THREE.PerspectiveCamera(42, 1, .01, 1600);
     const renderer = { domElement: { clientHeight: 800 }, capabilities: { getMaxAnisotropy: () => 4 }, initTexture: () => { uploadCalls++; }, getContext: () => ({ isContextLost: () => false }) };
-    const q = new MarsQuadtreeGlobe({ parent: new THREE.Group(), camera, renderer, now: () => time,
+    const q = new MarsQuadtreeGlobe({ parent: new THREE.Group(), camera, renderer, directLOD:false, now: () => time,
       createImage: () => { const image = { src: '', width: 256, height: 256 }; images.push(image); return image; } });
     const root = q.roots[0]; if (singleRoot) q.roots = [root];
     camera.position.copy(root.center).normalize().multiplyScalar(7); camera.lookAt(0, 0, 0); camera.updateProjectionMatrix();
@@ -45,11 +45,11 @@ export function runZoomTransitionTests() {
     h.frame(16); assert(h.root.children.filter(c => c.ready).length === 2);
     assert(h.root.mesh.visible && !h.root.transition);
   });
-  test('Parent remains visible until all four siblings upload and fade for 220ms', h => {
+  test('Parent remains visible until all four siblings upload and fade for configured duration', h => {
     h.warm(); h.finish(); h.frame(16); h.frame(16);
     assert(h.root.transition?.direction === 'split'); assert(h.root.children.every(c => c.ready && c.opacity === 0));
-    h.frame(110); assert(h.root.mesh.visible); h.root.children.forEach(c => close(c.opacity, .5));
-    h.frame(110); assert(!h.root.mesh.visible && h.root.split); assert(h.root.children.every(c => c.ready && c.opacity >= .99));
+    h.frame(FADE_MS/2); assert(h.root.mesh.visible); h.root.children.forEach(c => close(c.opacity, .5));
+    h.frame(FADE_MS/2); assert(!h.root.mesh.visible && h.root.split); assert(h.root.children.every(c => c.ready && c.opacity >= .99));
   });
   test('CTX families retain their underlay after the blend for transparent no-data coverage', h => {
     h.q.layer = 'ctx'; h.warm(); h.finish(); h.frame(16); h.frame(16); h.frame(220);
