@@ -16,9 +16,9 @@
   }
   buttons.forEach(button => { button.disabled = true; });
   report('Loading the Mars explorer…');
-  import(new URL('./app.js?v=mission2', scriptURL).href).then(() => {
+  import(new URL('./app.js?v=flight2', scriptURL).href).then(() => {
     buttons.forEach(button => { button.disabled = false; });
-    status.textContent = 'PARTICLE GLOBE READY · CHOOSE AUDIO MODE';
+    status.textContent = 'SYSTEM READY · SELECT AUDIO PREFERENCE';
   }).catch(error => {
     console.error('ARES startup failed:', error);
     report('The app could not load. Check your internet connection (Three.js loads from a CDN), then refresh. Use localhost or GitHub Pages, rather than opening index.html directly.');

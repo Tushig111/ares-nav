@@ -1,28 +1,29 @@
-import {createProximityLabels} from './proximity-labels.js?v=mission2';
-import {createMobileShell} from './mobile-shell.js?v=mission2';
-import { pickReferenceMap } from './map-picking.js?v=mission2';
-import { createTrekSearch } from './trek-search.js?v=mission2';
-import { createVehicles } from './vehicles.js?v=mission2';
-import { createProjectionController } from './projections.js?v=mission2';
-import { fetchDonkiCatalog, installProvenance } from './official-data.js?v=mission2';
-import { MarsQuadtreeGlobe, spherePoint, rectanglePoint } from './mars-quadtree-globe.js?v=mission2';
-import { createWorkbench } from './exploration-workbench.js?v=mission2';
-import { createMobileAR } from './ar-mobile.js?v=mission2';
-import { destination } from './geodesy.js?v=mission2';
-import { bindControls } from './controls.js?v=mission2';
+import { createRenderBudget } from './render-budget.js?v=flight2';
+import {createProximityLabels} from './proximity-labels.js?v=flight2';
+import {createMobileShell} from './mobile-shell.js?v=flight2';
+import { pickReferenceMap } from './map-picking.js?v=flight2';
+import { createTrekSearch } from './trek-search.js?v=flight2';
+import { createVehicles } from './vehicles.js?v=flight2';
+import { createProjectionController } from './projections.js?v=flight2';
+import { fetchDonkiCatalog, installProvenance } from './official-data.js?v=flight2';
+import { MarsQuadtreeGlobe, spherePoint, rectanglePoint } from './mars-quadtree-globe.js?v=flight2';
+import { createWorkbench } from './exploration-workbench.js?v=flight2';
+import { createMobileAR } from './ar-mobile.js?v=flight2';
+import { destination } from './geodesy.js?v=flight2';
+import { bindControls } from './controls.js?v=flight2';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { createSpaceAudioEngine } from './audio.js?v=mission2';
-import { SITES, LAYERS } from './data.js?v=mission2';
-import { hash2, valueNoise, fbm, ridgedFbm } from './noise.js?v=mission2';
-import { REAL, relabelJezero } from './marswalk-real.js?v=mw1';
-import { initMarswalk } from './marswalk-mission.js?v=mw1';
+import { createSpaceAudioEngine } from './audio.js?v=flight2';
+import { SITES, LAYERS } from './data.js?v=flight2';
+import { hash2, valueNoise, fbm, ridgedFbm } from './noise.js?v=flight2';
+import { REAL, relabelJezero } from './marswalk-real.js?v=flight2';
+import { initMarswalk } from './marswalk-mission.js?v=flight2';
 relabelJezero(SITES);
 let marswalk = null;
 const isReal = (i) => i === 1 && !!REAL;
 const unitMeters = (i) => isReal(i) ? REAL.K * 1000 : 24;                    // metres per scene unit
 const elevFromY = (i, y, relief) => isReal(i) ? REAL.landingElev + y / relief / REAL.E0 * REAL.K * 1000 : SITES[i].baseElevM + y * 18;
-import { GLSL_PARTICLE_VERTEX_SHADER, GLSL_PARTICLE_FRAGMENT_SHADER, GLSL_SPARKLE_VERTEX_SHADER, GLSL_SPARKLE_FRAGMENT_SHADER, GLSL_TERRAIN_VERTEX_SHADER, GLSL_TERRAIN_FRAGMENT_SHADER } from './shaders.js?v=mission2';
+import { GLSL_PARTICLE_VERTEX_SHADER, GLSL_PARTICLE_FRAGMENT_SHADER, GLSL_SPARKLE_VERTEX_SHADER, GLSL_SPARKLE_FRAGMENT_SHADER, GLSL_TERRAIN_VERTEX_SHADER, GLSL_TERRAIN_FRAGMENT_SHADER } from './shaders.js?v=flight2';
 
 // 1. CHLADNI-PLATE AUTONOMOUS CYMATIC STANDING-WAVE GPU SHADERS
 //    C(x, z) = a * sin(PI * n * x) * sin(PI * m * z) + b * sin(PI * m * x) * sin(PI * n * z)
@@ -84,7 +85,7 @@ const state = {
   waypoints: JSON.parse(JSON.stringify(SITES[0].defaultWaypoints)),
   selectedWp: 0,
   reconPhotoVariant: 0,
-  autoSpin: true,
+  autoSpin: false,
   isNadir: false,
   sepStorm: false,
   weatherPreset: 'clear',
@@ -172,9 +173,10 @@ function createMarsPlanetaryMaps() {
 }
 // 5. THREE.JS SCENE, 3D CHLADNI SPARKLE VORTEX & HIGH-LOD MOLA MARS GLOBE
 const container = document.getElementById('canvas-container');
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, stencil: true, powerPreference: 'high-performance' });
+const renderer = new THREE.WebGLRenderer({ antialias: false, alpha: false, stencil: true, powerPreference: 'high-performance' });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, MOBILE ? 1.5 : 2));
+const renderBudget = createRenderBudget(renderer);
+renderBudget.resize();
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.15;
 container.appendChild(renderer.domElement);
@@ -293,7 +295,7 @@ function sampleGlobeElevation(lat, lon) {
 }
 
 // Smooth, realistic 256x192 MOLA 3D Globe Geometry with subtle authentic relief (subtle relief)
-const marsGeo = new THREE.SphereGeometry(MARS_RADIUS, 256, 192);
+const marsGeo = new THREE.SphereGeometry(MARS_RADIUS, 96, 64);
 const mPos = marsGeo.attributes.position;
 const mUv = marsGeo.attributes.uv;
 const tmpV = new THREE.Vector3();
@@ -523,7 +525,7 @@ const atmoMat = new THREE.ShaderMaterial({
   side: THREE.BackSide,
   depthWrite: false
 });
-orbitalGroup.add(new THREE.Mesh(new THREE.SphereGeometry(MARS_RADIUS * 1.068, 96, 64), atmoMat));
+orbitalGroup.add(new THREE.Mesh(new THREE.SphereGeometry(MARS_RADIUS * 1.018, 96, 64), atmoMat));
 
 function latLonToVec3(lat, lon, r) {
   const phi = THREE.MathUtils.degToRad(90 - lat);
@@ -728,8 +730,8 @@ surfaceGroup.visible = false;
 scene.add(surfaceGroup);
 
 const DEM_SIZE = 104;
-const DEM_SEGMENTS = 192;
-const PARTICLE_GRID = MOBILE ? 120 : 240;
+const DEM_SEGMENTS = MOBILE ? 96 : 144;
+const PARTICLE_GRID = MOBILE ? 96 : 160;
 const PARTICLE_COUNT = PARTICLE_GRID * PARTICLE_GRID; // 57,600 GPU particles
 
 function evaluateSitePoint(siteId, x, z) {
@@ -845,14 +847,20 @@ function createSiteHighResTexture(siteIdx) {
   return tex;
 }
 
-const SITE_TEXTURES = SITES.map((_, idx) => createSiteHighResTexture(idx));
+// Generate only the sites actually visited, rather than all four at launch.
+function lazySites(factory) {
+  const cache = [];
+  return SITES.map((_, index) => Object.defineProperty({}, 'value', {
+    get() { return cache[index] ??= factory(index); }
+  }));
+}
+const siteTextures = lazySites(createSiteHighResTexture);
+const SITE_TEXTURES = new Proxy([], { get: (_, key) => siteTextures[key]?.value });
 
-function prebakeAllSiteGeometryBuffers() {
-  const caches = [];
+function bakeSiteGeometry(siteIdx) {
   const eps = 0.45;
   const vertCount = (DEM_SEGMENTS + 1) * (DEM_SEGMENTS + 1);
 
-  for (let siteIdx = 0; siteIdx < SITES.length; siteIdx++) {
     const terrainState = new Float32Array(vertCount * 4);
     let vPtr = 0;
     for (let iz = 0; iz <= DEM_SEGMENTS; iz++) {
@@ -905,12 +913,11 @@ function prebakeAllSiteGeometryBuffers() {
       }
     }
 
-    caches.push({ terrainState, particlePos, particleCol });
-  }
-  return caches;
+    return { terrainState, particlePos, particleCol };
 }
 
-const SITE_CACHES = prebakeAllSiteGeometryBuffers();
+const siteGeometry = lazySites(bakeSiteGeometry);
+const SITE_CACHES = new Proxy([], { get: (_, key) => siteGeometry[key]?.value });
 
 function getSiteHeight(siteIdx, x, z) {
   return evaluateSitePoint(siteIdx, x, z).h * state.relief;
@@ -2584,7 +2591,7 @@ window.setMode = (newMode) => {
     marsMat.opacity = 1.0;
     overlayMat.opacity = 0.52;
     globeParticleShaderMat.uniforms.uIntroProgress.value = 1.0;
-    globeParticleShaderMat.uniforms.uShellOpacity.value = 0.18;
+    globeParticleShaderMat.uniforms.uShellOpacity.value = 0;
     atmoMat.uniforms.uFade.value = 1.0;
     sparkleShaderMat.uniforms.uOrbitalScale.value = 0.22;
 
@@ -2886,7 +2893,11 @@ function formatMetricDistance(meters) {
   return `${Math.round(meters)} m`;
 }
 
+let lastHudUpdate = -Infinity;
 function updateZoomScaleAndDestinationHUD(remKm) {
+  const now = performance.now();
+  if (now - lastHudUpdate < 100) return;
+  lastHudUpdate = now;
   if (camera.isOrthographicCamera) {
     const kmPerPixel=(camera.top-camera.bottom)/camera.zoom/(renderer.domElement.clientHeight||800)*3389.5/MARS_RADIUS*(progressiveGlobe?.rectangle?Math.PI/2:1);
     const raw=kmPerPixel*90, magnitude=10**Math.floor(Math.log10(raw));
@@ -3202,9 +3213,11 @@ const clock = new THREE.Clock();
 const projVec = new THREE.Vector3();
 const camNormal = new THREE.Vector3();
 
-let fpsStart=0, fpsFrames=0;
+let lastUiUpdate = -Infinity;
 function animate(time, frame) {
-  fpsFrames++; if(time-fpsStart>=1000){const label=document.getElementById('brand-telemetry');if(label)label.textContent=`CHLADNI GPU · ${Math.round(fpsFrames*1000/(time-fpsStart))} FPS`;fpsFrames=0;fpsStart=time;}
+  const cpuStart = performance.now();
+  if (document.hidden && !mobileAR?.active) { clock.getDelta(); return; }
+  renderBudget.frame(time, state.mode);
   const dt = Math.min(clock.getDelta(), 0.05);
   const elapsed = clock.getElapsedTime();
   if (mobileAR?.active) { mobileAR.update(time, frame); return; }
@@ -3212,14 +3225,17 @@ function animate(time, frame) {
   marswalk?.update(dt);
   vehicles?.update(dt);
   projectionView?.update(dt);
-  trekPanel?.update();
-  proximityLabels?.update();mobileShell?.update();
-  progressiveGlobe?.update(marsMat.opacity);
+  if (time - lastUiUpdate >= 100) {
+    lastUiUpdate = time;
+    trekPanel?.update();
+    proximityLabels?.update();
+    mobileShell?.update();
+  }
 
   particleShaderMat.uniforms.uTime.value = elapsed;
   sparkleShaderMat.uniforms.uTime.value = elapsed;
   globeParticleShaderMat.uniforms.uTime.value = elapsed;
-  spaceAudio.updateVisualizer(elapsed);
+  // The decorative audio bars are hidden in the flight interface.
 
   // Update Particle Globe -> Actual Martian Globe Smooth Translation on Launch
   if (state.globeIntroMorph.active) {
@@ -3235,8 +3251,10 @@ function animate(time, frame) {
     marsMat.opacity = meshFade;
     overlayMat.opacity = meshFade * 0.52;
     atmoMat.uniforms.uFade.value = 0.25 + meshFade * 0.75;
-    globeParticleShaderMat.uniforms.uShellOpacity.value = 1.0 - meshFade * 0.82;
+    globeParticleShaderMat.uniforms.uShellOpacity.value = 1.0 - meshFade;
   }
+
+  globeParticlePoints.visible = !state.globeIntroMorph.started || state.globeIntroMorph.active;
 
   if (state.sparkleBurst.active) {
     state.sparkleBurst.progress += dt / state.sparkleBurst.duration;
@@ -3307,6 +3325,7 @@ function animate(time, frame) {
       marsMesh.rotation.y += dt * 0.095;
     }
 
+    if (marsMesh.children.some(o => o.geometry === arcPacketGeo && o.visible)) {
     const pArr = arcPacketGeo.attributes.position.array;
     for (let i = 0; i < ARC_PACKET_COUNT; i++) {
       const meta = arcPacketMeta[i];
@@ -3317,8 +3336,10 @@ function animate(time, frame) {
       pArr[i * 3 + 2] = pt.z;
     }
     arcPacketGeo.attributes.position.needsUpdate = true;
+    }
 
     satellites.forEach((sat) => {
+      if (!sat.body.parent.visible) return;
       const angle = elapsed * sat.speed + sat.phase;
       sat.body.position.set(Math.cos(angle) * sat.radius, 0, Math.sin(angle) * sat.radius);
 
@@ -3432,12 +3453,17 @@ function animate(time, frame) {
   if (controls.enabled) {
     controls.update();
   }
+  if (state.mode === 'orbital') progressiveGlobe?.update(marsMat.opacity);
+  const submitStart = performance.now();
   renderer.render(scene, camera);
+  renderBudget.submitted(renderer.info.render, submitStart - cpuStart, performance.now() - submitStart);
+
 }
 
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
+  renderBudget.resize();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 // 13. 3D AR PATH CHEVRONS, WALK-BACK SAFETY RING, UHF VIEWSHED & CRISM PLOT
@@ -3779,7 +3805,8 @@ window.dismissLaunchOverlay = (withAudio = false) => {
 function initializeExplorationTools() {
   const source=document.getElementById('progressive-source');
   progressiveGlobe=new MarsQuadtreeGlobe({parent:marsMesh,camera,renderer,radius:MARS_RADIUS,onStatus:info=>{
-    source.textContent=`NASA imagery · ${info.message}`;
+    const text = `NASA imagery · ${info.message}`;
+    if (source.textContent !== text) source.textContent = text;
     if(upgrades)upgrades.tileStatus.textContent=`${info.message}\n${info.diagnostics}`;
     source.dataset.zoomLevel=String(info.level);
     source.dataset.sourceLayer=info.sourceLayer;
@@ -3789,7 +3816,6 @@ function initializeExplorationTools() {
   controls.addEventListener('change', () => {
     if (state.mode !== 'orbital') return;
     progressiveGlobe?.invalidate();
-    progressiveGlobe?.update(marsMat.opacity);
   });
   const cloneRoute=()=>({siteIndex:state.siteIndex,waypoints:structuredClone(state.waypoints),speed:state.astronautSpeed,progress:state.evaProgress,weather:state.weatherPreset});
   const restoreRoute=saved=>{
@@ -3876,7 +3902,7 @@ function initializeExplorationTools() {
   proximityLabels=createProximityLabels(api,record=>{if(matchMedia('(max-width:768px)').matches)mobileShell?.open('Search');trekPanel.reveal(record);});
   mobileShell=createMobileShell(api,trekPanel);
 
-  vehicles=createVehicles({parent:surfaceGroup,getSite:()=>SITES[state.siteIndex],getHeight:getSiteHeight,getMode:()=>state.mode,host:upgrades.host,enterSurface:()=>{if(state.mode==='orbital')window.setMode('hybrid');},focus:(point,offset)=>{surfaceParticles.visible=false;routeGroup.visible=false;placeDemoGroup.visible=false;scrubRing.visible=false;dropPreviewGroup.visible=false;astronautRig.root.visible=false;controls.minDistance=.12;state.autoSpin=false;state.suitDemoActive=false;state.povMode='free';controls.enabled=true;state.isCameraTransitioning=false;controls.target.copy(point);camera.position.copy(point).add(offset);camera.lookAt(point);controls.update();}});
+  vehicles=createVehicles({camera,parent:surfaceGroup,getSite:()=>SITES[state.siteIndex],getHeight:getSiteHeight,getMode:()=>state.mode,host:upgrades.host,enterSurface:()=>{if(state.mode==='orbital')window.setMode('hybrid');},focus:(point,offset)=>{surfaceParticles.visible=false;routeGroup.visible=false;placeDemoGroup.visible=false;scrubRing.visible=false;dropPreviewGroup.visible=false;astronautRig.root.visible=false;controls.minDistance=.12;state.autoSpin=false;state.suitDemoActive=false;state.povMode='free';controls.enabled=true;state.isCameraTransitioning=false;controls.target.copy(point);camera.position.copy(point).add(offset);camera.lookAt(point);controls.update();}});
 
   mobileAR=createMobileAR({renderer,buttonHost:upgrades.arHost,onStatus:message=>{upgrades.arStatus.textContent=message;},onActive:active=>{
     controls.enabled=!active&&state.povMode==='free';
@@ -3913,5 +3939,11 @@ if (REAL) {
   try { window.selectSite('1'); state.loadedSurfaceSite = 1; } catch (err) { console.warn(err); }   // Jezero is the default study site
 }
 renderer.setAnimationLoop(animate);
+document.addEventListener('visibilitychange', () => {
+  if (mobileAR?.active) return;
+  clock.getDelta();
+  renderBudget.reset();
+  renderer.setAnimationLoop(document.hidden ? null : animate);
+});
 
 installProvenance(() => SITES[state.siteIndex], () => donkiLiveInfo);

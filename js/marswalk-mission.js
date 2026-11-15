@@ -2,7 +2,7 @@
 // cost-optimal routing on the real 200 m grid, 6-permutation planner with sortie chunking, custom pins,
 // client-side ML decision engine + stress test, and the scientific disclaimer.
 // Routes are handed to ARES as ordinary waypoints, so the ARES astronaut, route tube, pins and profile do the rest.
-import * as S from './marswalk-survival.js?v=mw1';
+import * as S from './marswalk-survival.js?v=flight2';
 
 const world = S.world, G = world.grid, ROWS = world.rows, COLS = world.cols, N = ROWS * COLS;
 const digit = (s, i) => s.charCodeAt(i) - 48;
@@ -318,7 +318,7 @@ export function initMarswalk(api) {
     if (!drag) return; const d = drag; drag = null; api.controls.enabled = state.povMode === 'free';
     if (d.moved && d.pt) { const ll = REAL.toLatLon(d.pt.x, d.pt.z); movePin(d.pin, ll.lat, ll.lon); }
   });
-  let tap = null; M.clickPlace = true;
+  let tap = null; M.clickPlace = false;
   cv.addEventListener('pointerdown', e => { tap = { x: e.clientX, y: e.clientY, t: performance.now(), btn: e.button }; });
   cv.addEventListener('pointerup', e => {
     const t = tap; tap = null;
@@ -496,7 +496,7 @@ export function initMarswalk(api) {
   const fmtH = h => isFinite(h) ? `${Math.floor(h)}h ${String(Math.round((h % 1) * 60)).padStart(2, '0')}m` : '—';
   const survCls = v => v >= .85 ? 'ok' : v >= .6 ? 'warn' : 'bad';
   const stopName = n => n.hab ? 'Habitat' : n.task ? `T${n.task.n}` : n.name;
-  const panel = document.createElement('aside'); panel.id = 'mw-panel'; panel.className = 'glass'; document.body.appendChild(panel);
+  const panel = document.createElement('aside'); panel.id = 'mw-panel'; panel.setAttribute('aria-label','Marswalk mission planner'); panel.className = 'glass'; document.body.appendChild(panel);
   const modal = document.createElement('div'); modal.id = 'mw-modal'; document.body.appendChild(modal);
   const card = document.createElement('div'); card.id = 'mw-card'; card.className = 'glass'; document.body.appendChild(card);
   const openBtn = document.createElement('button'); openBtn.id = 'mw-open'; openBtn.className = 'seg-btn mw-open'; openBtn.textContent = 'MARSWALK Mission'; openBtn.title = 'Jezero mission: habitat, 3 EVA tasks, hazards, route planner, ML advisor';
@@ -587,7 +587,7 @@ export function initMarswalk(api) {
         return `<div class="mw-task" data-task="${T.id}"><div class="mw-task-h"><b>TASK ${T.n}</b><span>${esc(T.short)}</span><button class="mw-chip" data-mw="gotask" data-v="${T.id}">Show</button></div>
           <div class="mw-dim">${esc(T.where)} · ${T.lat.toFixed(4)}°N ${T.lon.toFixed(4)}°E <i>(${T.coordNote})</i> · ${d.toFixed(1)} km from habitat (${d < MISSION.walkKm ? 'walking range' : d <= MISSION.roverKm ? 'rover range' : 'out of range'}) · slope ${G.slope[t.cell].toFixed(1)}°</div>
           <p><b>Real problem.</b> ${esc(T.problem)}</p><p><b>Why a robot cannot.</b> ${esc(T.robot)}</p><p><b>Human task.</b> ${esc(T.human)}</p><p><b>Risk.</b> ${esc(T.risk)}</p></div>`; }).join('');
-    } else if (M.tab === 'advisor') {
+    } else if (!panel.contains(document.activeElement) && M.tab === 'advisor') {
       const l = live || liveSample(), order = S.DECISION_ORDER;
       body = `<div class="mw-verdict ${!l.dec.meets ? 'bad' : l.dec.key === 'continue' ? 'ok' : 'warn'}"><span>ADVICE AT THE ASTRONAUT</span><b>${ACTION_TEXT[l.dec.key]}</b><i>${l.dec.meets ? `${pct(l.p[l.dec.key])} predicted success · least disruptive option ≥ 85 %` : `no option reaches 85 % · best available ${pct(l.p[l.dec.key])}`}</i></div>
         <div id="mw-bars">${order.map(k => `<div class="mw-bar ${k === l.dec.key ? 'best' : ''}"><span>${ACTION_TEXT[k]}</span><b>${pct(l.p[k])}</b><div><i style="width:${(l.p[k] * 100).toFixed(1)}%" class="${survCls(l.p[k])}"></i></div></div>`).join('')}</div>
@@ -598,7 +598,7 @@ export function initMarswalk(api) {
         <div class="mw-facts four small"><div><span>Slope</span><b>${l.a.slope_deg.toFixed(1)}°</b></div><div><span>Home path</span><b>${l.a.home_km.toFixed(1)} km</b></div><div><span>Shelter</span><b>${l.a.shelter_km.toFixed(1)} km</b></div><div><span>Suit O₂</span><b>${Math.round(l.s.o2_pct)} %</b></div>
           <div><span>Dust τ</span><b>${l.s.dust_tau.toFixed(1)}</b></div><div><span>Wind</span><b>${l.s.wind_ms.toFixed(0)} m/s</b></div><div><span>Radiation</span><b>${l.s.rad_usvh >= 1000 ? (l.s.rad_usvh / 1000).toFixed(1) + ' mSv/h' : l.s.rad_usvh.toFixed(0) + ' µSv/h'}</b></div><div><span>Suit press.</span><b>${l.s.suit_kpa.toFixed(1)} kPa</b></div></div>
         <p class="mw-fine">A neural network (${S.model.metrics.architecture}) runs in your browser at every route node. It was trained on ${S.model.metrics.samples.toLocaleString('en-US')} <b>simulated</b> EVAs — see the ⓘ note.</p>`;
-    } else if (M.tab === 'loc') {
+    } else if (!panel.contains(document.activeElement) && M.tab === 'loc') {
       body = locHtml();
     } else if (M.tab === 'cond') {
       body = condHtml();
@@ -684,9 +684,9 @@ export function initMarswalk(api) {
         liveT = 0; const l = liveSample(), k = l.dec.key;
         lblAdvice.className = 'mw-label advice ' + (!l.dec.meets ? 'bad' : k === 'continue' ? 'ok' : 'warn');
         lblAdvice.innerHTML = `<b>ML: ${ACTION_TEXT[k].toUpperCase()}</b><span>${pct(l.p[k])} · continue ${pct(l.p.continue)}</span>`;
-        if (M.tab === 'advisor' && document.body.classList.contains('mw-open') && !panel.matches(':hover')) renderPanel();
+        if (!panel.contains(document.activeElement) && M.tab === 'advisor' && document.body.classList.contains('mw-open') && !panel.matches(':hover')) renderPanel();
         if (M.tab === 'cond' && document.body.classList.contains('mw-open')) syncCond(l);
-        if (M.tab === 'loc' && document.body.classList.contains('mw-open') && !panel.matches(':hover') && (!M.placed || state.astronautSpeed > .05)) renderPanel();
+        if (!panel.contains(document.activeElement) && M.tab === 'loc' && document.body.classList.contains('mw-open') && !panel.matches(':hover') && (!M.placed || state.astronautSpeed > .05)) renderPanel();
         if (state.mode === 'hybrid') api.particleUniforms.uOpacityScale.value = 0;
       }
       const p = api.astronautPosition(); place(lblAdvice, p.x, p.y + 6.2, p.z, true);
