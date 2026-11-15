@@ -8,9 +8,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./css/styles.css?v=20261114u4">
-  <link rel="stylesheet" href="./css/exploration.css?v=20261114u4">
-  <link rel="stylesheet" href="./css/projections.css?v=map4">
+  <link rel="stylesheet" href="./css/styles.css?v=mission-ui1">
+  <link rel="stylesheet" href="./css/exploration.css?v=mission-ui1">
+  <link rel="stylesheet" href="./css/projections.css?v=mission-ui1">
 </head>
 <body class="mode-orbital">
   <!-- Ultra-Minimalist Particle-to-Globe Mission Launch Screen -->
@@ -171,7 +171,8 @@
   <button class="icon-chip glass zen-restore" data-click-action="toggle-zen">Show HUD (H)</button>
 
   <!-- Minimal Top Floating Pill Bar -->
-  <header class="top-bar">
+  <header class="top-bar" aria-label="Mission controls">
+    <div class="mission-zone" role="group" aria-label="Mission and viewing mode">
     <div class="brand-pill glass">
       <span id="brand-dot" class="mars-dot"></span>
       <span class="brand-title">ARES-NAV</span>
@@ -183,7 +184,11 @@
       <button id="btn-hybrid" class="seg-btn" data-click-action="set-mode-2">3D Hybrid</button>
       <button id="btn-particles" class="seg-btn" data-click-action="set-mode-3">Pure Particle LiDAR</button>
       <button id="btn-pov" class="seg-btn surface-only" data-click-action="cycle-astronaut-p-o-v" title="Cycle Astronaut Angle of View (1st-Person Visor HUD / Over-the-Shoulder / Free Drone)">Astronaut POV: Off</button>
-      <div class="pill-divider"></div>
+    </div>
+    </div>
+
+    <div class="site-pill glass" role="group" aria-label="Study site navigation">
+      <label class="sr-only" for="site-select">Study site</label>
       <button class="step-btn" data-click-action="cycle-site" title="Previous Mars Site ([)">‹</button>
       <select id="site-select" class="site-select" data-change-action="select-site">
         <option value="0">01 · Gale / Bradbury regional study</option>
@@ -194,7 +199,7 @@
       <button class="step-btn" data-click-action="cycle-site-2" title="Next Mars Site (])">›</button>
     </div>
 
-    <div class="status-pill glass">
+    <div class="status-pill glass" role="group" aria-label="System status and audio">
       <span id="coord-readout" class="coord-readout surface-only">4.5895° S, 137.4417° E · -4,120m</span>
       <button id="feed-status-btn" class="icon-chip" data-click-action="toggle-nasa-feed-modal-2" title="Inspect official locked sources and DONKI catalog">NASA Feed: Not checked</button>
       <button id="storm-btn" class="icon-chip surface-only" data-click-action="toggle-storm" title="Toggle synthetic SEP scenario (independent of DONKI)">SEP DEMO: Off</button>
