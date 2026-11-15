@@ -1,0 +1,15 @@
+{
+  "moduleAndLODTestsPassed": 46,
+  "projectionGeometryTestsPassed": 13,
+  "gpuBlendTestsPassed": 3,
+  "observedFlows": [
+    "Full 2:1 Viking imagery in rectangle",
+    "Hidden sphere and orbital decorations",
+    "Return to global globe restores original geometry",
+    "Projection selector has four modes"
+  ],
+  "observedConsoleErrors": 0,
+  "LODVerification": "Synthetic successful responses reach actual CTX L11 at the Jezero rectangle anchor and panned polar positions at \u00b170 degrees latitude with <=220 textures and <=12 requests",
+  "coverageLimit": "Does not guarantee real CTX coverage or simultaneous L11 wedges at exact poles",
+  "deployment": "Published as the GitHub Pages source; deployment verified separately"
+}

@@ -23,3 +23,7 @@ See [PERFORMANCE.md](PERFORMANCE.md) for measured results and test limits. All e
 ## Final rover and launch controls
 
 Open **Explore + Measure → Rovers + MAV demonstration**. Choose Gale for Curiosity or Jezero for Perseverance, then use **Inspect rover**. Clean/dusty switching is available for Curiosity. **Launch MAV demo** runs a procedural educational launch with 3.72 m/s² downward gravity and assumed thrust. No MAV GLB was provided. See [FINAL-VERIFICATION.md](FINAL-VERIFICATION.md) for asset provenance, scale, AR device-testing limits and deployment details.
+
+## Four projections
+
+The map selector now includes **Global Map (Rectangle)**: a full 2:1 longitude/latitude map using the same quadtree and texture cache. All orthographic modes support zoom up to 32768× and pan; available tiles refine through CTX L11. Choose a projection, then scroll/pinch or use +/−. See [MAP-PROJECTIONS.md](MAP-PROJECTIONS.md) for validation and source-coverage limits.

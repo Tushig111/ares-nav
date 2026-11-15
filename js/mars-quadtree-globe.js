@@ -23,6 +23,7 @@ export function spherePoint(lat, lon, r) {
   const p = (90 - lat) * Math.PI / 180, t = (lon + 180) * Math.PI / 180;
   return new THREE.Vector3(-r * Math.sin(p) * Math.cos(t), r * Math.cos(p), r * Math.sin(p) * Math.sin(t));
 }
+export function rectanglePoint(lat, lon, r) { return new THREE.Vector3(lon / 180 * 2 * r, lat / 90 * r, 0); }
 // UVs point north at v=1. Shared cached textures are never mutated with repeat/offset.
 export function inheritedUV(child, ancestor) {
   const d = 2 ** (child.z - ancestor.z);
@@ -45,6 +46,18 @@ export class MarsQuadtreeGlobe {
     this.roots = [];
     for (let row = 0; row < 2; row++) for (let col = 0; col < 4; col++) this.roots.push(this.node(1, row, col));
   }
+  setProjection(mode) {
+    const rectangle = mode === 'rectangle';
+    if (rectangle === !!this.rectangle) return;
+    this.rectangle = rectangle;
+    if (rectangle) this.group.quaternion.copy(this.parent.getWorldQuaternion(new THREE.Quaternion())).invert();
+    else this.group.quaternion.identity();
+    for (const node of this.nodes.values()) if (node.mesh) {
+      node.mesh.geometry.dispose(); node.mesh.geometry = this.buildGeometry(node);
+    }
+    this.invalidate();
+  }
+  point(lat, lon) { return this.rectangle ? rectanglePoint(lat, lon, this.radius) : spherePoint(lat, lon, this.radius); }
   sourceLayer(z) { return this.layer === 'optical' && this.autoCTX && z >= AUTO_CTX_LEVEL ? 'ctx' : this.layer; }
   key(layer, z, row, col) { return `${layer}/${z}/${row}/${col}`; }
   nodeKey(node) { return this.key(this.sourceLayer(node.z), node.z, node.row, node.col); }
@@ -68,12 +81,11 @@ export class MarsQuadtreeGlobe {
       mesh: null, children: null, ready: false, opacity: 0, split: false, transition: null, target: null, base: null, last: this.tick };
     this.nodes.set(key, node); return node;
   }
-  ensureMesh(node) {
-    if (node.mesh) return;
+  buildGeometry(node) {
     // Coarse patches share one angular grid; tiny skirts cover later T-junctions.
     const n = Math.max(2, Math.ceil(64 / 2 ** (node.z - 1))), positions = [], uv = [], indices = [];
     for (let y = 0; y <= n; y++) for (let x = 0; x <= n; x++) {
-      const p = spherePoint(node.north + (node.south - node.north) * y / n, node.west + (node.east - node.west) * x / n, this.radius);
+      const p = this.point(node.north + (node.south - node.north) * y / n, node.west + (node.east - node.west) * x / n);
       positions.push(p.x, p.y, p.z); uv.push(x / n, 1 - y / n);
     }
     for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
@@ -87,11 +99,16 @@ export class MarsQuadtreeGlobe {
     const skirtStart = positions.length / 3;
     for (const i of edge) {
       const scale = (this.radius - .003) / this.radius;
-      positions.push(positions[i * 3] * scale, positions[i * 3 + 1] * scale, positions[i * 3 + 2] * scale); uv.push(uv[i * 2], uv[i * 2 + 1]);
+      positions.push(positions[i * 3] * (this.rectangle ? 1 : scale), positions[i * 3 + 1] * (this.rectangle ? 1 : scale), this.rectangle ? -.003 : positions[i * 3 + 2] * scale); uv.push(uv[i * 2], uv[i * 2 + 1]);
     }
     for (let i = 0; i < edge.length; i++) { const j = (i + 1) % edge.length; indices.push(edge[i], skirtStart + i, edge[j], edge[j], skirtStart + i, skirtStart + j); }
     const geometry = new THREE.BufferGeometry(); geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
     geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); geometry.setIndex(indices); geometry.computeVertexNormals(); geometry.computeBoundingSphere();
+    return geometry;
+  }
+  ensureMesh(node) {
+    if (node.mesh) return;
+    const geometry = this.buildGeometry(node);
     const uniforms = { inheritedMap: { value: this.placeholder }, inheritedUV: { value: new THREE.Vector4(0, 0, 1, 1) }, detailMix: { value: 0 } };
     const material = new THREE.MeshBasicMaterial({ map: this.placeholder, side: THREE.FrontSide, toneMapped: false, transparent: true,
       polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -node.z });
@@ -273,29 +290,53 @@ export class MarsQuadtreeGlobe {
     this.lastUpdate = now; this.dirty = false; this.tick++; this.queue.clear();
     // Preserve previous visible samples while complete sibling reservations are admitted.
     const previousPins = this.pins; this.pins = new Set(previousPins);
-    this.parent.updateWorldMatrix(true, false); this.camera.updateMatrixWorld();
+    this.parent.updateWorldMatrix(true, true); this.camera.updateMatrixWorld();
     this.projection.multiplyMatrices(this.camera.projectionMatrix, this.camera.matrixWorldInverse); this.frustum.setFromProjectionMatrix(this.projection);
     const localCamera = this.parent.worldToLocal(this.camera.getWorldPosition(new THREE.Vector3()));
     const direction = this.camera.isOrthographicCamera ? this.camera.getWorldDirection(new THREE.Vector3()).negate().transformDirection(this.parent.matrixWorld.clone().invert()) : localCamera.clone().normalize();
-    const focusLat = THREE.MathUtils.radToDeg(Math.asin(direction.y));
-    const focusLon = ((THREE.MathUtils.radToDeg(Math.atan2(direction.z, -direction.x)) - 180 + 540) % 360) - 180;
+    // Orthographic pan moves the ray origin, not its direction. Intersect that
+    // ray with the actual surface to prioritize the viewport centre correctly.
+    const ray = new THREE.Raycaster(); ray.setFromCamera(new THREE.Vector2(), this.camera);
+    const localRay = ray.ray.clone().applyMatrix4(this.group.matrixWorld.clone().invert());
+    const focus = this.rectangle ? localRay.intersectPlane(new THREE.Plane(new THREE.Vector3(0,0,1),0),new THREE.Vector3()) : localRay.intersectSphere(new THREE.Sphere(new THREE.Vector3(),this.radius),new THREE.Vector3());
+    const focusLat = focus ? (this.rectangle ? focus.y / this.radius * 90 : THREE.MathUtils.radToDeg(Math.asin(THREE.MathUtils.clamp(focus.y/this.radius,-1,1)))) : 0;
+    const focusLon = focus ? (this.rectangle ? focus.x / (2*this.radius)*180 : ((THREE.MathUtils.radToDeg(Math.atan2(focus.z,-focus.x))-180+540)%360)-180) : 0;
     const horizonAngle = this.camera.isOrthographicCamera ? Math.PI / 2 : Math.acos(THREE.MathUtils.clamp(this.radius / localCamera.length(), 0, 1));
-    const height = this.renderer.domElement.clientHeight || 800, maxLevel = this.layer === 'optical' && this.autoCTX ? 11 : LAYERS[this.layer].max;
+    const height = this.renderer.domElement.clientHeight || 800, width = this.renderer.domElement.clientWidth || height*(this.camera.aspect||1), maxLevel = this.layer === 'optical' && this.autoCTX ? 11 : LAYERS[this.layer].max;
     const drawPins = new Set(), reservationsUsed = new Set(); let leaves = 0, geometryLevel = 1, badge = null, badgeScore = Infinity, blending = false;
+    const screenBounds = node => {
+      if(node.boundsTick===this.tick)return node.screenBounds;
+      let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+      // Sample meridians and parallels, including pole vertices. Unlike an
+      // angular-size heuristic, this accounts for longitude convergence.
+      if(!node.samples||node.sampleRectangle!==this.rectangle){
+        const steps=this.rectangle?1:node.z<=2?4:2;node.samples=[];node.sampleRectangle=this.rectangle;
+        for(let y=0;y<=steps;y++)for(let x=0;x<=steps;x++)node.samples.push(this.point(node.north+(node.south-node.north)*y/steps,node.west+(node.east-node.west)*x/steps));
+      }
+      for(const sample of node.samples){
+        const p=this.scratchWorld.copy(sample).applyMatrix4(this.group.matrixWorld).project(this.camera);
+        minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);
+      }
+      node.boundsTick=this.tick;return node.screenBounds={minX,maxX,minY,maxY};
+    };
     const inView = node => {
-      const world = this.scratchWorld.copy(node.center).applyMatrix4(this.parent.matrixWorld);
-      const facing = node.center.dot(direction) / this.radius;
-      const horizonBound = Math.cos(Math.min(Math.PI, horizonAngle + node.angular * .8));
-      return facing > -.15 && facing >= horizonBound && this.frustum.intersectsSphere(this.scratchSphere.set(world, this.radius * node.angular * .8));
+      if(this.rectangle){const b=screenBounds(node);return b.maxX>=-1&&b.minX<=1&&b.maxY>=-1&&b.minY<=1;}
+      const world=this.scratchWorld.copy(node.center).applyMatrix4(this.parent.matrixWorld);
+      const facing=node.center.dot(direction)/this.radius;
+      const horizonBound=Math.cos(Math.min(Math.PI,horizonAngle+node.angular*.8));
+      return facing>-.15&&facing>=horizonBound&&this.frustum.intersectsSphere(this.scratchSphere.set(world,this.radius*node.angular*.8));
     };
     const projectedSize = node => {
-      if (this.camera.isOrthographicCamera) return this.radius * node.angular * height * this.camera.zoom / (this.camera.top - this.camera.bottom);
-      // Distance to the nearest point on a patch, not its possibly distant center.
-      const lat = THREE.MathUtils.clamp(focusLat, node.south, node.north);
-      let lon = focusLon; if (lon < node.west) lon += 360; if (lon > node.east) lon -= 360;
-      lon = THREE.MathUtils.clamp(lon, node.west, node.east);
-      const distance = Math.max(.01, localCamera.distanceTo(spherePoint(lat, lon, this.radius)));
-      return this.radius * node.angular * height / (2 * Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2)) * distance);
+      if(this.camera.isOrthographicCamera){const b=screenBounds(node);return Math.max((b.maxX-b.minX)*width/2,(b.maxY-b.minY)*height/2);}
+      const lat=THREE.MathUtils.clamp(focusLat,node.south,node.north);
+      let lon=focusLon;if(lon<node.west)lon+=360;if(lon>node.east)lon-=360;lon=THREE.MathUtils.clamp(lon,node.west,node.east);
+      const distance=Math.max(.01,localCamera.distanceTo(spherePoint(lat,lon,this.radius)));
+      return this.radius*node.angular*height/(2*Math.tan(THREE.MathUtils.degToRad(this.camera.fov/2))*distance);
+    };
+    const priority = node => {
+      if(focusLat>=node.south&&focusLat<=node.north&&focusLon>=node.west&&focusLon<=node.east)return -1e6-node.z;
+      if(!this.camera.isOrthographicCamera)return -projectedSize(node);
+      const b=screenBounds(node),x=Math.max(b.minX,Math.min(0,b.maxX)),y=Math.max(b.minY,Math.min(0,b.maxY));return x*x+y*y;
     };
     const visit = (node, fallback, allowRefine = true) => {
       this.metrics.visited++; node.last = this.tick;
@@ -307,7 +348,7 @@ export class MarsQuadtreeGlobe {
       }
       const pixels = visible ? projectedSize(node) : 0;
 
-      const key = this.nodeKey(node), entry = visible || node.z === 1 ? this.request(node, node.z === 1 ? -1e9 : -pixels) : this.cache.get(key);
+      const key = this.nodeKey(node), entry = visible || node.z === 1 ? this.request(node, node.z === 1 ? -1e9 : priority(node)) : this.cache.get(key);
       this.prepare(node, fallback, entry);
       if (node.z === 1 && node.ready && node.opacity < 1 && !node.transition) node.transition = { direction: 'root', start: now, from: [node.opacity] };
       if (visible || node.z === 1) drawPins.add(key);
@@ -315,7 +356,7 @@ export class MarsQuadtreeGlobe {
       const ref = this.appearance(node, fallback, opacity); node.mesh.visible = true;
       if (ref) drawPins.add(ref.entry.key);
       if (node.opacity < 1 && node.base?.entry) drawPins.add(node.base.entry.key);
-      const wantsSplit = allowRefine && visible && opacity >= .99 && node.z < maxLevel && pixels > LAYERS[this.sourceLayer(node.z)].size * 1.3 && leaves < (this.camera.isOrthographicCamera ? 256 : 72);
+      const wantsSplit = allowRefine && visible && opacity >= .99 && node.z < maxLevel && pixels > LAYERS[this.sourceLayer(node.z)].size * 1.3 && (this.camera.isOrthographicCamera || leaves < 72);
       if (wantsSplit && node.ready && node.opacity >= .99 && !node.children) node.children = [0, 1, 2, 3].map(i => this.node(node.z + 1, node.row * 2 + (i >> 1), node.col * 2 + i % 2));
       if (node.children && (wantsSplit || node.split || node.transition?.direction === 'split' || node.transition?.direction === 'merge')) {
         if (wantsSplit && !node.split && !node.transition && node.ready && node.opacity >= .99 && this.reserve(node)) {
@@ -323,7 +364,7 @@ export class MarsQuadtreeGlobe {
           // Children inherit immediately; their own imagery stays hidden until all uploads finish.
           let ready = true;
           for (const child of node.children) {
-            const childRef = ref ? this.reference(ref.entry, child) : null, childEntry = this.request(child, -pixels + 1);
+            const childRef = ref ? this.reference(ref.entry, child) : null, childEntry = this.request(child, priority(child));
             this.prepare(child, childRef, childEntry, true); this.appearance(child, childRef, opacity);
             child.mesh.visible = false; if (!child.ready) ready = false;
           }
@@ -343,13 +384,13 @@ export class MarsQuadtreeGlobe {
           leaves += 4;
         } else if (node.split) {
           if (!wantsSplit) {
-            for (const child of node.children) visit(child, ref ? this.reference(ref.entry, child) : null, false);
+            for (const child of [...node.children].sort((a,b)=>priority(a)-priority(b))) visit(child, ref ? this.reference(ref.entry, child) : null, false);
             if (node.children.every(child => !child.split && !child.transition) && ref) {
               for (const child of node.children) child.base = this.reference(ref.entry, child);
               node.transition = { direction: 'merge', start: now, from: node.children.map(child => child.opacity) }; blending = true;
             }
           } else {
-            for (const child of node.children) visit(child, ref ? this.reference(ref.entry, child) : null, true);
+            for (const child of [...node.children].sort((a,b)=>priority(a)-priority(b))) visit(child, ref ? this.reference(ref.entry, child) : null, true);
             // All four children supply either their own imagery or an inherited sub-rectangle.
             if (!this.requiresUnderlay(node) && node.children.every(child => child.mesh && (child.ready && child.opacity >= .99 || !visible))) node.mesh.visible = false;
           }
@@ -357,13 +398,13 @@ export class MarsQuadtreeGlobe {
       } else leaves++;
       if (node.mesh.visible && ref && visible) {
         geometryLevel = Math.max(geometryLevel, node.z);
-        const center = node.center.clone().applyMatrix4(this.parent.matrixWorld).project(this.camera);
+        const center = this.point((node.north+node.south)/2,(node.west+node.east)/2).applyMatrix4(this.group.matrixWorld).project(this.camera);
         const containsFocus = focusLat >= node.south && focusLat <= node.north && focusLon >= node.west && focusLon <= node.east;
         const score = containsFocus ? -1000 - node.z : 1000 + center.x ** 2 + center.y ** 2;
         if (score < badgeScore) { badgeScore = score; badge = ref.entry; }
       }
     };
-    for (const root of this.roots) visit(root, null);
+    for (const root of [...this.roots].sort((a,b)=>priority(a)-priority(b))) visit(root, null);
     // Roots remain pinned as persistent coverage for rapid rotations and zoom reversals.
     for (const root of this.roots) if (this.valid(root.target)) drawPins.add(root.target.key);
     for (const key of this.reservations.keys()) if (!reservationsUsed.has(key)) this.reservations.delete(key);

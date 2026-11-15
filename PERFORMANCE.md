@@ -33,6 +33,7 @@ Both runs reached 236 nodes and the 220-texture budget. These are measured impro
 
 Raw results are in `data/render-profile.json`. Geometry tests cover north/south orientation, exact orthographic matrix, ray picking, zoom, cache identity, resize and global restoration. Existing geodesy, cache and sibling transition tests are retained; actual GPU alpha-blend checks remain available at `tests/tile-blend-gpu.html`.
 
-## Polar resolution limit
 
-The 220-texture budget remains enforced in all views. Polar traversal permits up to 256 visible leaves (global traversal permits 72), but does not bypass protected-ancestor memory limits. The EQ pyramid converges at the poles: very deep polar zoom can retain coarser Viking imagery when a full sibling set cannot fit or CTX coverage is missing. The HUD reports the actually available imagery level, not the desired zoom level. In the browser deep-pole check, 110× retained Viking L3; high-resolution polar coverage is not claimed. A separate polar tile service or a more extensive pole-specific retiling/cache architecture would be required to guarantee native detail at the exact pole; this version deliberately keeps the requested shared EQ imagery system.
+## Four-projection revision
+
+The orthographic leaf-count gate has been removed. Projected patch bounds, panned view-center picking, focus-first traversal and a higher orthographic zoom limit replace the earlier behavior. The 220-texture and 12-request ceilings still apply. The profile numbers above describe the previous renderer, not a benchmark of this revision. See MAP-PROJECTIONS.md for current tests and coverage limits.

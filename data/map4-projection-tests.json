@@ -1,0 +1,58 @@
+{
+  "passed": 13,
+  "total": 13,
+  "results": [
+    {
+      "name": "North uses true orthographic projection",
+      "passed": true
+    },
+    {
+      "name": "North camera follows tilted globe axis",
+      "passed": true
+    },
+    {
+      "name": "Polar view disables rotation, enables screen pan",
+      "passed": true
+    },
+    {
+      "name": "Center picking ray intersects north hemisphere",
+      "passed": true
+    },
+    {
+      "name": "Orthographic zoom changes projection scale",
+      "passed": true
+    },
+    {
+      "name": "South faces opposite globe axis",
+      "passed": true
+    },
+    {
+      "name": "Projection changes reuse exact cache and globe",
+      "passed": true
+    },
+    {
+      "name": "Polar resize maintains aspect ratio",
+      "passed": true
+    },
+    {
+      "name": "Global restores perspective camera and position",
+      "passed": true
+    },
+    {
+      "name": "Rectangle camera is orthographic and faces the map plane",
+      "passed": true
+    },
+    {
+      "name": "Rectangle minimum zoom fits the entire 2:1 map on a portrait screen",
+      "passed": true
+    },
+    {
+      "name": "Orthographic max zoom admits deep L11 refinement",
+      "passed": true
+    },
+    {
+      "name": "Invalid mode is rejected",
+      "passed": true
+    }
+  ]
+}

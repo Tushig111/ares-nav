@@ -1,17 +1,17 @@
-import { createVehicles } from './vehicles.js?v=final1';
-import { createProjectionController } from './projections.js?v=final1';
-import { fetchDonkiCatalog, installProvenance } from './official-data.js?v=final1';
-import { MarsQuadtreeGlobe, spherePoint } from './mars-quadtree-globe.js?v=final1';
-import { createWorkbench } from './exploration-workbench.js?v=final1';
-import { createMobileAR } from './ar-mobile.js?v=final1';
-import { destination } from './geodesy.js?v=final1';
-import { bindControls } from './controls.js?v=final1';
+import { createVehicles } from './vehicles.js?v=map4';
+import { createProjectionController } from './projections.js?v=map4';
+import { fetchDonkiCatalog, installProvenance } from './official-data.js?v=map4';
+import { MarsQuadtreeGlobe, spherePoint, rectanglePoint } from './mars-quadtree-globe.js?v=map4';
+import { createWorkbench } from './exploration-workbench.js?v=map4';
+import { createMobileAR } from './ar-mobile.js?v=map4';
+import { destination } from './geodesy.js?v=map4';
+import { bindControls } from './controls.js?v=map4';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { createSpaceAudioEngine } from './audio.js?v=final1';
-import { SITES, LAYERS } from './data.js?v=final1';
-import { hash2, valueNoise, fbm, ridgedFbm } from './noise.js?v=final1';
-import { GLSL_PARTICLE_VERTEX_SHADER, GLSL_PARTICLE_FRAGMENT_SHADER, GLSL_SPARKLE_VERTEX_SHADER, GLSL_SPARKLE_FRAGMENT_SHADER, GLSL_TERRAIN_VERTEX_SHADER, GLSL_TERRAIN_FRAGMENT_SHADER } from './shaders.js?v=final1';
+import { createSpaceAudioEngine } from './audio.js?v=map4';
+import { SITES, LAYERS } from './data.js?v=map4';
+import { hash2, valueNoise, fbm, ridgedFbm } from './noise.js?v=map4';
+import { GLSL_PARTICLE_VERTEX_SHADER, GLSL_PARTICLE_FRAGMENT_SHADER, GLSL_SPARKLE_VERTEX_SHADER, GLSL_SPARKLE_FRAGMENT_SHADER, GLSL_TERRAIN_VERTEX_SHADER, GLSL_TERRAIN_FRAGMENT_SHADER } from './shaders.js?v=map4';
 
 // 1. CHLADNI-PLATE AUTONOMOUS CYMATIC STANDING-WAVE GPU SHADERS
 //    C(x, z) = a * sin(PI * n * x) * sin(PI * m * z) + b * sin(PI * m * x) * sin(PI * n * z)
@@ -2851,7 +2851,7 @@ function formatMetricDistance(meters) {
 
 function updateZoomScaleAndDestinationHUD(remKm) {
   if (camera.isOrthographicCamera) {
-    const kmPerPixel=(camera.top-camera.bottom)/camera.zoom/(renderer.domElement.clientHeight||800)*3389.5/MARS_RADIUS;
+    const kmPerPixel=(camera.top-camera.bottom)/camera.zoom/(renderer.domElement.clientHeight||800)*3389.5/MARS_RADIUS*(progressiveGlobe?.rectangle?Math.PI/2:1);
     const raw=kmPerPixel*90, magnitude=10**Math.floor(Math.log10(raw));
     const km=[1,2,5,10].map(v=>v*magnitude).reduce((a,b)=>Math.abs(a-raw)<Math.abs(b-raw)?a:b);
     hudZoomRatioEl.textContent=`${camera.zoom.toFixed(1)}×`;
@@ -3744,7 +3744,7 @@ function initializeExplorationTools() {
     source.dataset.sourceLayer=info.sourceLayer;
     source.dataset.blending=String(info.blending);
   }});
-  projectionView = createProjectionController({ camera, controls, globe: marsMesh, tiles: progressiveGlobe, isOrbital: () => state.mode === 'orbital', enterOrbital: () => { if (state.mode !== 'orbital') window.setMode('orbital'); }, pauseMotion: () => { state.autoSpin=false; state.isCameraTransitioning=false; document.getElementById('spin-btn').classList.remove('active'); } });
+  projectionView = createProjectionController({ camera, controls, globe: marsMesh, tiles: progressiveGlobe, onProjection: mode => {upgrades?.measurements.refresh();document.getElementById('caption-kicker').textContent=mode==='rectangle'?'NASA IMAGERY · EQUIRECTANGULAR 2:1 · PROJECTED SCALE':'NASA IMAGERY · REFERENCE SPHERE · DERIVED MARKERS';}, isOrbital: () => state.mode === 'orbital', enterOrbital: () => { if (state.mode !== 'orbital' || state.globeIntroMorph.active) window.setMode('orbital'); }, pauseMotion: () => { state.autoSpin=false; state.isCameraTransitioning=false; document.getElementById('spin-btn').classList.remove('active'); } });
   controls.addEventListener('change', () => {
     if (state.mode !== 'orbital') return;
     progressiveGlobe?.invalidate();
@@ -3774,7 +3774,7 @@ function initializeExplorationTools() {
     return {x:x*24,z:z*24,y:getSiteHeight(state.siteIndex,x,z)*18};
   });
   const api={
-    globe:marsMesh,radius:MARS_RADIUS,globePoint:spherePoint,canvas:renderer.domElement,controls,tiles:progressiveGlobe,
+    camera,globe:marsMesh,radius:MARS_RADIUS,globePoint:(lat,lon,r)=>{if(!progressiveGlobe.rectangle)return spherePoint(lat,lon,r);const p=rectanglePoint(lat,lon,MARS_RADIUS);p.z=r-MARS_RADIUS;return p.applyQuaternion(progressiveGlobe.group.quaternion);},canvas:renderer.domElement,controls,tiles:progressiveGlobe,
     getState:()=>state,getSite:()=>SITES[state.siteIndex],
     cancelWaypoint:()=>{if(state.addWpMode)window.toggleAddWaypoint();},
     download:(name,text)=>{const url=URL.createObjectURL(new Blob([text],{type:'application/geo+json'}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);},
@@ -3783,20 +3783,28 @@ function initializeExplorationTools() {
       const rect=renderer.domElement.getBoundingClientRect();
       const ndc=new THREE.Vector2((event.clientX-rect.left)/rect.width*2-1,-(event.clientY-rect.top)/rect.height*2+1);
       const ray=new THREE.Raycaster();ray.setFromCamera(ndc,camera);
+      if(progressiveGlobe.rectangle){
+        const local=ray.ray.clone().applyMatrix4(progressiveGlobe.group.matrixWorld.clone().invert());
+        const p=local.intersectPlane(new THREE.Plane(new THREE.Vector3(0,0,1),0),new THREE.Vector3());
+        if(!p||Math.abs(p.x)>2*MARS_RADIUS||Math.abs(p.y)>MARS_RADIUS)return null;
+        return {lat:p.y/MARS_RADIUS*90,lon:p.x/(2*MARS_RADIUS)*180};
+      }
       const hit=ray.intersectObject(marsMesh,false)[0];if(!hit)return null;
       const p=marsMesh.worldToLocal(hit.point.clone()).normalize();
       return {lat:THREE.MathUtils.radToDeg(Math.asin(p.y)),lon:((THREE.MathUtils.radToDeg(Math.atan2(p.z,-p.x))-180+540)%360)-180};
     },
-    getView:()=>({site:state.siteIndex,mode:state.mode,layer:progressiveGlobe.layer,camera:camera.position.toArray(),target:controls.target.toArray(),globeRotation:marsMesh.rotation.toArray().slice(0,3),autoSpin:state.autoSpin}),
+    getView:()=>({zoom:camera.zoom,projection:projectionView?.mode,site:state.siteIndex,mode:state.mode,layer:progressiveGlobe.layer,camera:camera.position.toArray(),target:controls.target.toArray(),globeRotation:marsMesh.rotation.toArray().slice(0,3),autoSpin:state.autoSpin}),
     restoreView:view=>{
       if(!view||typeof view!=='object')return;
       if(Number.isInteger(view.site)&&view.site>=0&&view.site<SITES.length)window.selectSite(String(view.site));
       if(['orbital','hybrid','particles'].includes(view.mode))window.setMode(view.mode);
       if(['optical','ctx','topography','thermal'].includes(view.layer))progressiveGlobe.setLayer(view.layer);
       if(Array.isArray(view.globeRotation)&&view.globeRotation.length===3&&view.globeRotation.every(Number.isFinite))marsMesh.rotation.set(...view.globeRotation);
-      if(typeof view.autoSpin==='boolean')state.autoSpin=view.autoSpin;
+      if(['global','rectangle','north','south'].includes(view.projection))projectionView.setMode(view.projection);
+      if(typeof view.autoSpin==='boolean'&&view.projection!=='rectangle')state.autoSpin=view.autoSpin;
       const valid=a=>Array.isArray(a)&&a.length===3&&a.every(v=>Number.isFinite(v)&&Math.abs(v)<1000);
-      if(valid(view.camera)&&valid(view.target)){camera.position.fromArray(view.camera);controls.target.fromArray(view.target);state.isCameraTransitioning=false;}
+      if(valid(view.camera)&&valid(view.target)){camera.position.fromArray(view.camera);controls.target.fromArray(view.target);state.isCameraTransitioning=false;
+        if(Number.isFinite(view.zoom)&&camera.isOrthographicCamera)camera.zoom=THREE.MathUtils.clamp(view.zoom,1,32768);camera.updateProjectionMatrix();}
     },
     survival:{
       isOrbital:()=>state.mode==='orbital',

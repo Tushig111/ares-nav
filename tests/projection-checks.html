@@ -16,6 +16,11 @@ p.setMode('south');camera.updateMatrixWorld();check('South faces opposite globe 
 check('Projection changes reuse exact cache and globe',()=>tiles.cache===cache&&cache.get('same-texture').id===1);
 camera.aspect=.6;camera.updateProjectionMatrix();check('Polar resize maintains aspect ratio',()=>Math.abs((camera.right-camera.left)/(camera.top-camera.bottom)-.6)<1e-9);
 p.setMode('global');check('Global restores perspective camera and position',()=>camera.isPerspectiveCamera&&!camera.isOrthographicCamera&&camera.position.distanceTo(initial)<1e-6&&controls.enableRotate&&!controls.enablePan);
+p.setMode('rectangle');camera.updateMatrixWorld();
+check('Rectangle camera is orthographic and faces the map plane',()=>camera.isOrthographicCamera&&camera.getWorldDirection(new THREE.Vector3()).dot(new THREE.Vector3(0,0,-1))>.99999);
+check('Rectangle minimum zoom fits the entire 2:1 map on a portrait screen',()=>camera.right-camera.left>=18.4&&camera.top-camera.bottom>=9.2);
+check('Orthographic max zoom admits deep L11 refinement',()=>controls.maxZoom===32768);
+p.setMode('global');
 check('Invalid mode is rejected',()=>p.setMode('bogus')===false);
 document.querySelector('#result').textContent=JSON.stringify({passed:results.filter(x=>x.passed).length,total:results.length,results},null,2);
 </script>

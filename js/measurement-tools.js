@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { MARS, validatePoint, wrapLongitude, planetographicLatitude, pathMetrics, interpolate, toMarsGeoJSON } from './geodesy.js?v=final1';
+import { MARS, validatePoint, wrapLongitude, planetographicLatitude, pathMetrics, interpolate, toMarsGeoJSON } from './geodesy.js?v=map4';
 export function createMeasurementTools(api, host) {
   const group=new THREE.Group();api.globe.add(group);
   let points=[],redo=[],mode='inspect',enabled=false,east360=false,down=null,savedAutoSpin=false;
@@ -10,10 +10,12 @@ export function createMeasurementTools(api, host) {
   function render(){
     clearGeometry();group.visible=api.getState().mode==='orbital';
     const coords=points.map(spherical);
-    for(const p of coords){const dot=new THREE.Mesh(new THREE.SphereGeometry(.025,8,6),new THREE.MeshBasicMaterial({color:0xfbbf24,depthTest:false}));dot.position.copy(p);group.add(dot);}
+    for(const p of coords){const dot=new THREE.Mesh(new THREE.SphereGeometry(.025,8,6),new THREE.MeshBasicMaterial({color:0xfbbf24,depthTest:false}));dot.userData.marker=true;dot.position.copy(p);group.add(dot);}
     if(points.length>1){const line=[];const count=points.length-1+(mode==='polygon'?1:0);
       try{for(let i=0;i<count;i++)for(let j=0;j<=32;j++)line.push(spherical(interpolate(points[i],points[(i+1)%points.length],j/32)));}catch(error){output.textContent=error.message;return;}
-      const mesh=new THREE.Line(new THREE.BufferGeometry().setFromPoints(line),new THREE.LineBasicMaterial({color:0xfbbf24,depthTest:false}));group.add(mesh);
+      const plotted=[];if(api.tiles.rectangle)for(let i=1;i<line.length;i++){if(line[i].distanceTo(line[i-1])<api.radius*2)plotted.push(line[i-1],line[i]);}
+      const LineType=api.tiles.rectangle?THREE.LineSegments:THREE.Line;
+      const mesh=new LineType(new THREE.BufferGeometry().setFromPoints(api.tiles.rectangle?plotted:line),new THREE.LineBasicMaterial({color:0xfbbf24,depthTest:false}));group.add(mesh);
     }
     panel.replaceChildren();
     points.forEach((p,i)=>{const row=document.createElement('div');row.className='vertex-row';
@@ -50,5 +52,5 @@ export function createMeasurementTools(api, host) {
   api.canvas.addEventListener('pointerup',e=>{if(!enabled||!down)return;e.stopImmediatePropagation();const start=down;down=null;if(Math.hypot(e.clientX-start.x,e.clientY-start.y)>8)return;const p=api.pick(e);if(!p)return;if(mode==='inspect')points=[p];else if(points.length<200)points.push(p);redo=[];render();},true);
   addEventListener('keydown',e=>{if(e.key==='Escape'&&enabled){enabled=false;host.querySelector('[data-measure-enable]').checked=false;api.controls.enabled=true;api.getState().autoSpin=savedAutoSpin;}});
   addEventListener('hashchange',restore);restore();render();
-  return {update(){group.visible=api.getState().mode==='orbital';if(enabled)api.controls.enabled=false;},get enabled(){return enabled;},snapshot(){return {points:points.map(p=>({...p})),mode};}};
+  return {refresh:render,update(){if(api.camera?.isOrthographicCamera){const size=(api.camera.top-api.camera.bottom)/api.camera.zoom/(api.canvas.clientHeight||800)*5/.025;for(const dot of group.children)if(dot.userData.marker)dot.scale.setScalar(size);}else for(const dot of group.children)if(dot.userData.marker)dot.scale.setScalar(1);group.visible=api.getState().mode==='orbital';if(enabled)api.controls.enabled=false;},get enabled(){return enabled;},snapshot(){return {points:points.map(p=>({...p})),mode};}};
 }
