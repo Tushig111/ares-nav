@@ -1,3 +1,7 @@
+# Integrated scientific GIS build
+
+See [SCIENTIFIC-GIS.md](SCIENTIFIC-GIS.md) for current layer status, coordinate conventions, provenance and verification. Eight local demo layers function; official MOLA imagery and USGS geology remain available. Older source-library status reports below describe earlier builds.
+
 # USGS geology upgrade
 
 See [GEOLOGY-SOURCES.md](GEOLOGY-SOURCES.md) for the source chain, scientific rationale and display limits.

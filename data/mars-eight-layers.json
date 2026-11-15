@@ -7,80 +7,201 @@
       "name": "Elevation / Topography",
       "origin": "MOLA (NASA) / HRSC (ESA), USGS blended DEM",
       "resolution": "Global 200 m DEM product; rendered MOLA hillshade is 463 m/px.",
-      "availability": "Hillshade display available; numerical DEM and contours are not loaded.",
+      "availability": "Working local synthetic demonstration; authoritative reference is not its data source.",
       "decisionLimit": "Regional relief context. Route gradient and energy require numerical heights, datum and sampling checks.",
       "sourceURL": "https://fdp.astrogeology.usgs.gov/fdp/mars/",
-      "action": "hillshade"
+      "action": "hillshade",
+      "renderedDataset": {
+        "id": "ares-procedural-topography",
+        "classification": "SIMULATED",
+        "instrument": null,
+        "observationDate": null,
+        "coverage": "Selected study-site synthetic footprint only; approximate anchor",
+        "sampleSpacingMeters": 39,
+        "coordinateConvention": "Planetocentric, east-positive -180..180, local +X east / -Z north; R=3389500m spherical approximation",
+        "elevationReference": "Relative synthetic heights; no measured vertical datum",
+        "confidence": {
+          "class": "simulated",
+          "quantitativeProbability": null
+        },
+        "codeSource": "js/science-model.js / existing js/app.js model"
+      }
     },
     {
       "id": "slope",
       "name": "Slope & Traversability",
       "origin": "DEM-derived slope; regional CTX slope products in NASA Trek",
       "resolution": "Coverage and pixel size vary by DEM; inspect each product.",
-      "availability": "Official regional products linked; A* currently uses synthetic local terrain.",
+      "availability": "Working local synthetic demonstration; authoritative reference is not its data source.",
       "decisionLimit": "Slope is only one mobility factor. Safe/challenging/unsuitable classes need vehicle-specific thresholds and obstacles.",
       "sourceURL": "https://trek.nasa.gov/tiles/apidoc/trekAPI.html?body=mars",
-      "action": "slope"
+      "action": "slope",
+      "renderedDataset": {
+        "id": "ares-procedural-slope",
+        "classification": "SIMULATED",
+        "instrument": null,
+        "observationDate": null,
+        "coverage": "Selected study-site synthetic footprint only; approximate anchor",
+        "sampleSpacingMeters": 39,
+        "coordinateConvention": "Planetocentric, east-positive -180..180, local +X east / -Z north; R=3389500m spherical approximation",
+        "elevationReference": "Relative synthetic heights; no measured vertical datum",
+        "confidence": {
+          "class": "simulated",
+          "quantitativeProbability": null
+        },
+        "codeSource": "js/science-model.js / existing js/app.js model"
+      }
     },
     {
       "id": "temperature",
       "name": "Surface Temperature",
       "origin": "NASA Mars Odyssey THEMIS thermal infrared observations",
       "resolution": "Observation-specific acquisition time, calibration and spatial resolution.",
-      "availability": "Official mission source linked; calibrated temperature raster not loaded.",
+      "availability": "Working local synthetic demonstration; authoritative reference is not its data source.",
       "decisionLimit": "IR brightness and thermal inertia are different quantities. Suit exposure also needs radiation balance, atmosphere and suit model.",
       "sourceURL": "https://science.nasa.gov/mission/odyssey/science-instruments/",
-      "action": "thermal"
+      "action": "thermal",
+      "renderedDataset": {
+        "id": "ares-procedural-temperature",
+        "classification": "SIMULATED",
+        "instrument": null,
+        "observationDate": null,
+        "coverage": "Selected study-site synthetic footprint only; approximate anchor",
+        "sampleSpacingMeters": 39,
+        "coordinateConvention": "Planetocentric, east-positive -180..180, local +X east / -Z north; R=3389500m spherical approximation",
+        "elevationReference": "Relative synthetic heights; no measured vertical datum",
+        "confidence": {
+          "class": "simulated",
+          "quantitativeProbability": null
+        },
+        "codeSource": "js/science-model.js / existing js/app.js model"
+      }
     },
     {
       "id": "minerals",
       "name": "Mineral Composition",
       "origin": "NASA MRO CRISM / ESA Mars Express OMEGA",
       "resolution": "Targeted/regional spectral coverage; product-dependent resolution.",
-      "availability": "Official CRISM instrument source linked; spectral abundance map not loaded.",
+      "availability": "Working local synthetic demonstration; authoritative reference is not its data source.",
       "decisionLimit": "Spectral evidence supports geological targets; hydrated minerals do not establish accessible water or ore grade. OMEGA is ESA data, not NASA-authored.",
       "sourceURL": "https://science.nasa.gov/mission/mars-reconnaissance-orbiter/science-instruments/",
-      "action": "mineral"
+      "action": "mineral",
+      "renderedDataset": {
+        "id": "ares-procedural-minerals",
+        "classification": "SIMULATED",
+        "instrument": null,
+        "observationDate": null,
+        "coverage": "Selected study-site synthetic footprint only; approximate anchor",
+        "sampleSpacingMeters": 39,
+        "coordinateConvention": "Planetocentric, east-positive -180..180, local +X east / -Z north; R=3389500m spherical approximation",
+        "elevationReference": "Relative synthetic heights; no measured vertical datum",
+        "confidence": {
+          "class": "simulated",
+          "quantitativeProbability": null
+        },
+        "codeSource": "js/science-model.js / existing js/app.js model"
+      }
     },
     {
       "id": "ice",
       "name": "Subsurface Water Ice",
       "origin": "NASA mission observations / NASA-funded SWIM interpretation",
       "resolution": "Published regional ice-consistency maps; depth and evidence vary.",
-      "availability": "Official published map linked; georeferenced ice raster not loaded.",
+      "availability": "Working local synthetic demonstration; authoritative reference is not its data source.",
       "decisionLimit": "Compare evidence for potential ice resources. Neutron hydrogen may include hydrated material; this cannot locate a local water pocket or guarantee extractability.",
       "sourceURL": "https://www.jpl.nasa.gov/images/pia26046-distribution-of-buried-ice-on-mars/",
-      "action": "ice"
+      "action": "ice",
+      "renderedDataset": {
+        "id": "ares-procedural-ice",
+        "classification": "SIMULATED",
+        "instrument": null,
+        "observationDate": null,
+        "coverage": "Selected study-site synthetic footprint only; approximate anchor",
+        "sampleSpacingMeters": 39,
+        "coordinateConvention": "Planetocentric, east-positive -180..180, local +X east / -Z north; R=3389500m spherical approximation",
+        "elevationReference": "Relative synthetic heights; no measured vertical datum",
+        "confidence": {
+          "class": "simulated",
+          "quantitativeProbability": null
+        },
+        "codeSource": "js/science-model.js / existing js/app.js model"
+      }
     },
     {
       "id": "dust",
       "name": "Dust & Atmospheric Opacity",
       "origin": "NASA MRO MARCI daily global weather-map archive",
       "resolution": "Historical dated swaths; opacity retrievals require a specific calibrated product.",
-      "availability": "USGS/PDS archive linked; atmospheric opacity raster not loaded.",
+      "availability": "Working local synthetic demonstration; authoritative reference is not its data source.",
       "decisionLimit": "Cloud/dust appearance is not numerical tau. Date and local time matter for visibility and solar-power estimates; historical maps are not forecasts.",
       "sourceURL": "https://astrogeology.usgs.gov/search/map/mars_mro_marci_daily_global_weather_maps_pds4_archive",
-      "action": "dust"
+      "action": "dust",
+      "renderedDataset": {
+        "id": "ares-procedural-dust",
+        "classification": "SIMULATED",
+        "instrument": null,
+        "observationDate": null,
+        "coverage": "Selected study-site synthetic footprint only; approximate anchor",
+        "sampleSpacingMeters": 39,
+        "coordinateConvention": "Planetocentric, east-positive -180..180, local +X east / -Z north; R=3389500m spherical approximation",
+        "elevationReference": "Relative synthetic heights; no measured vertical datum",
+        "confidence": {
+          "class": "simulated",
+          "quantitativeProbability": null
+        },
+        "codeSource": "js/science-model.js / existing js/app.js model"
+      }
     },
     {
       "id": "traverse",
       "name": "Mission Traverse & Waypoints",
       "origin": "NASA Curiosity / Perseverance mission location maps",
       "resolution": "Published mission-map epoch; study anchors in ARES-NAV are approximate.",
-      "availability": "Official mission maps linked; user pins and synthetic EVA routes available.",
+      "availability": "Working local synthetic demonstration; authoritative reference is not its data source.",
       "decisionLimit": "Use actual mission maps for published rover tracks; proposed astronaut paths stay explicitly simulated. No live rover feed is claimed.",
       "sourceURL": "https://science.nasa.gov/mission/msl-curiosity/location-map/",
-      "action": "route"
+      "action": "route",
+      "renderedDataset": {
+        "id": "ares-procedural-traverse",
+        "classification": "SIMULATED",
+        "instrument": null,
+        "observationDate": null,
+        "coverage": "Selected study-site synthetic footprint only; approximate anchor",
+        "sampleSpacingMeters": 39,
+        "coordinateConvention": "Planetocentric, east-positive -180..180, local +X east / -Z north; R=3389500m spherical approximation",
+        "elevationReference": "Relative synthetic heights; no measured vertical datum",
+        "confidence": {
+          "class": "simulated",
+          "quantitativeProbability": null
+        },
+        "codeSource": "js/science-model.js / existing js/app.js model"
+      }
     },
     {
       "id": "obstacles",
       "name": "Boulder & Obstacle Hazard",
       "origin": "NASA MRO HiRISE imagery; separate synthetic route demonstration",
       "resolution": "Targeted images; native pixel size and lighting vary per observation.",
-      "availability": "Official HiRISE source linked; validated boulder detections not loaded.",
+      "availability": "Working local synthetic demonstration; authoritative reference is not its data source.",
       "decisionLimit": "Inspect resolved objects and shadows in specific images. Automated detection needs scale, confidence and validation; synthetic rerouting demonstrates software only.",
       "sourceURL": "https://marsoweb.nas.nasa.gov/HiRISE/",
-      "action": "obstacles"
+      "action": "obstacles",
+      "renderedDataset": {
+        "id": "ares-procedural-obstacles",
+        "classification": "SIMULATED",
+        "instrument": null,
+        "observationDate": null,
+        "coverage": "Selected study-site synthetic footprint only; approximate anchor",
+        "sampleSpacingMeters": 39,
+        "coordinateConvention": "Planetocentric, east-positive -180..180, local +X east / -Z north; R=3389500m spherical approximation",
+        "elevationReference": "Relative synthetic heights; no measured vertical datum",
+        "confidence": {
+          "class": "simulated",
+          "quantitativeProbability": null
+        },
+        "codeSource": "js/science-model.js / existing js/app.js model"
+      }
     }
-  ]
+  ],
+  "build": "Integrated GIS"
 }

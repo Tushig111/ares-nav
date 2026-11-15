@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {loadSearchCatalog,landmarkBadge} from './official-data.js?v=layers8';
+import {loadSearchCatalog,landmarkBadge} from './official-data.js?v=gis1';
 // Decluttering is screen-space; approximate mission anchors never receive an official badge.
 export function createProximityLabels(api,onSelect){
  const host=document.createElement('div');host.className='proximity-labels';host.setAttribute('aria-label','Nearby Martian landmarks');document.body.append(host);

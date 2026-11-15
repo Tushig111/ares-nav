@@ -1,3 +1,5 @@
+> Historical source-library report. Superseded by SCIENTIFIC-GIS.md in this build.
+
 # Eight Mars science categories: implementation status
 
 The Layers panel now offers eight consistently styled source cards with instrument ownership, resolution/coverage guidance, implementation status and decision limits. This is a source-access library, not eight newly validated scientific raster overlays.
