@@ -1,23 +1,24 @@
-import {createScientificLayerManager} from './scientific-layer-manager.js?v=gis2';
-import {createGeologyLayers} from './geology-layers.js?v=gis2';
-import {createProximityLabels} from './proximity-labels.js?v=gis2';
-import {createMobileShell} from './mobile-shell.js?v=gis2';
-import { pickReferenceMap } from './map-picking.js?v=gis2';
-import { createTrekSearch } from './trek-search.js?v=gis2';
-import { createVehicles } from './vehicles.js?v=gis2';
-import { createProjectionController } from './projections.js?v=gis2';
-import { fetchDonkiCatalog, installProvenance } from './official-data.js?v=gis2';
-import { MarsQuadtreeGlobe, spherePoint, rectanglePoint } from './mars-quadtree-globe.js?v=gis2';
-import { createWorkbench } from './exploration-workbench.js?v=gis2';
-import { createMobileAR } from './ar-mobile.js?v=gis2';
-import { destination } from './geodesy.js?v=gis2';
-import { bindControls } from './controls.js?v=gis2';
+import {createJezeroFieldLab} from './jezero-fieldlab.js?v=final1';
+import {createScientificLayerManager} from './scientific-layer-manager.js?v=final1';
+import {createGeologyLayers} from './geology-layers.js?v=final1';
+import {createProximityLabels} from './proximity-labels.js?v=final1';
+import {createMobileShell} from './mobile-shell.js?v=final1';
+import { pickReferenceMap } from './map-picking.js?v=final1';
+import { createTrekSearch } from './trek-search.js?v=final1';
+import { createVehicles } from './vehicles.js?v=final1';
+import { createProjectionController } from './projections.js?v=final1';
+import { fetchDonkiCatalog, installProvenance } from './official-data.js?v=final1';
+import { MarsQuadtreeGlobe, spherePoint, rectanglePoint } from './mars-quadtree-globe.js?v=final1';
+import { createWorkbench } from './exploration-workbench.js?v=final1';
+import { createMobileAR } from './ar-mobile.js?v=final1';
+import { destination } from './geodesy.js?v=final1';
+import { bindControls } from './controls.js?v=final1';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { createSpaceAudioEngine } from './audio.js?v=gis2';
-import { SITES, LAYERS } from './data.js?v=gis2';
-import { hash2, valueNoise, fbm, ridgedFbm } from './noise.js?v=gis2';
-import { GLSL_PARTICLE_VERTEX_SHADER, GLSL_PARTICLE_FRAGMENT_SHADER, GLSL_SPARKLE_VERTEX_SHADER, GLSL_SPARKLE_FRAGMENT_SHADER, GLSL_TERRAIN_VERTEX_SHADER, GLSL_TERRAIN_FRAGMENT_SHADER } from './shaders.js?v=gis2';
+import { createSpaceAudioEngine } from './audio.js?v=final1';
+import { SITES, LAYERS } from './data.js?v=final1';
+import { hash2, valueNoise, fbm, ridgedFbm } from './noise.js?v=final1';
+import { GLSL_PARTICLE_VERTEX_SHADER, GLSL_PARTICLE_FRAGMENT_SHADER, GLSL_SPARKLE_VERTEX_SHADER, GLSL_SPARKLE_FRAGMENT_SHADER, GLSL_TERRAIN_VERTEX_SHADER, GLSL_TERRAIN_FRAGMENT_SHADER } from './shaders.js?v=final1';
 
 // 1. CHLADNI-PLATE AUTONOMOUS CYMATIC STANDING-WAVE GPU SHADERS
 //    C(x, z) = a * sin(PI * n * x) * sin(PI * m * z) + b * sin(PI * m * x) * sin(PI * n * z)
@@ -61,6 +62,7 @@ async function fetchLiveDonkiSpaceWeather() {
 }
 
 let upgrades = null;
+let fieldLab = null;
 let mobileAR = null;
 let vehicles = null;
 let progressiveGlobe = null;
@@ -2039,7 +2041,7 @@ function intersectTerrainSurface() {
 }
 
 renderer.domElement.addEventListener('pointerdown', (e) => {
-  if (mobileAR?.active || upgrades?.measurements.enabled) return;
+  if (fieldLab?.active || mobileAR?.active || upgrades?.measurements.enabled) return;
   pointerDownPos = { x: e.clientX, y: e.clientY };
   lastPointerPos = { x: e.clientX, y: e.clientY };
   if (state.mode !== 'orbital' && state.povMode !== 'free') {
@@ -2052,7 +2054,7 @@ window.addEventListener('pointerup', () => {
 });
 
 renderer.domElement.addEventListener('pointermove', (e) => {
-  if (mobileAR?.active || upgrades?.measurements.enabled) return;
+  if (fieldLab?.active || mobileAR?.active || upgrades?.measurements.enabled) return;
   if (state.mode === 'orbital') return;
 
   // Allow smooth, comfortable manual look-around when in Shoulder or Visor POV
@@ -2092,7 +2094,7 @@ renderer.domElement.addEventListener('pointermove', (e) => {
 });
 
 renderer.domElement.addEventListener('pointerup', (e) => {
-  if (mobileAR?.active || upgrades?.measurements.enabled) return;
+  if (fieldLab?.active || mobileAR?.active || upgrades?.measurements.enabled) return;
   if (state.mode === 'orbital') return;
   const moveDist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
   if (moveDist > 9) return;
@@ -2510,6 +2512,7 @@ window.toggleSuitDemoShowcase = () => {
 };
 
 window.setMode = (newMode) => {
+  fieldLab?.close();
   surfaceParticles.visible=true;routeGroup.visible=true;astronautRig.root.visible=true;
   projectionView?.reset();
   const prevMode = state.mode;
@@ -2837,6 +2840,7 @@ function showToast(msg) {
 }
 
 window.addEventListener('keydown', (e) => {
+  if(fieldLab?.active)return;
   if (e.key === 'Escape' && state.addWpMode) window.toggleAddWaypoint();
   if (e.key === 'h' || e.key === 'H') window.toggleZen();
   if (e.key === '[') window.cycleSite(-1);
@@ -3181,6 +3185,7 @@ function animate(time, frame) {
   const dt = Math.min(clock.getDelta(), 0.05);
   const elapsed = clock.getElapsedTime();
   if (mobileAR?.active) { mobileAR.update(time, frame); return; }
+  if(fieldLab?.active){spaceAudio.updateVisualizer(elapsed);fieldLab.update(dt);return;}
   upgrades?.update(dt);
   vehicles?.update(dt);
   projectionView?.update(dt);
@@ -3877,6 +3882,7 @@ document.getElementById('science-brief').innerHTML = SITES[0].brief;
 renderCrismSpectralPlot(0);
 fetchLiveDonkiSpaceWeather();
 initializeExplorationTools();
+fieldLab=createJezeroFieldLab({renderer,hostControls:controls,onStatus:showToast,onActive:active=>{state.fieldLabActive=active;},canOpen:()=>!mobileAR?.active});
 renderer.setAnimationLoop(animate);
 
 installProvenance(() => SITES[state.siteIndex], () => donkiLiveInfo);

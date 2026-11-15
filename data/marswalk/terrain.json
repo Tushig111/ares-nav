@@ -1,0 +1,23 @@
+{
+ "n": 801,
+ "min": -2710.5,
+ "max": -1516.39,
+ "landingElev": -2567.1,
+ "bounds": {
+  "north": 18.786158842355587,
+  "south": 18.103241157644412,
+  "west": 77.09085035181012,
+  "east": 77.81074964818988
+ },
+ "lat0": 18.4447,
+ "lon0": 77.4508,
+ "kmPerDegLat": 59.1579349963478,
+ "kmPerDegLon": 56.118960253418976,
+ "local": {
+  "w": 77.37,
+  "e": 77.5112,
+  "s": 18.3747,
+  "n": 18.5147
+ },
+ "credit": "CTX DEM & ortho: NASA/JPL-Caltech/MSSS/USGS; HiRISE: NASA/JPL-Caltech/University of Arizona"
+}

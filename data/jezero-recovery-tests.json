@@ -1,0 +1,30 @@
+{
+  "passed": 6,
+  "total": 6,
+  "checks": [
+    {
+      "name": "Missing data yields a visible actionable message",
+      "pass": true
+    },
+    {
+      "name": "Host controls are suspended while lab is open",
+      "pass": true
+    },
+    {
+      "name": "Return restores host controls and clears lab mode",
+      "pass": true
+    },
+    {
+      "name": "Retry successfully loads terrain",
+      "pass": true
+    },
+    {
+      "name": "Retry uses real rendered geometry",
+      "pass": true
+    },
+    {
+      "name": "Second close restores host again",
+      "pass": true
+    }
+  ]
+}

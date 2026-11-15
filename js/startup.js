@@ -16,7 +16,7 @@
   }
   buttons.forEach(button => { button.disabled = true; });
   report('Loading the Mars explorer…');
-  import(new URL('./app.js?v=gis2', scriptURL).href).then(() => {
+  import(new URL('./app.js?v=final1', scriptURL).href).then(() => {
     buttons.forEach(button => { button.disabled = false; });
     status.textContent = 'PARTICLE GLOBE READY · CHOOSE AUDIO MODE';
   }).catch(error => {

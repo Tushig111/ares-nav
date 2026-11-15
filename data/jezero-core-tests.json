@@ -1,0 +1,99 @@
+{
+  "tests": {
+    "passed": 18,
+    "total": 18,
+    "checks": [
+      {
+        "name": "Geographic origin is preserved",
+        "pass": true
+      },
+      {
+        "name": "Coordinate roundtrip with east/north signs",
+        "pass": true
+      },
+      {
+        "name": "Physical grid spacing",
+        "pass": true
+      },
+      {
+        "name": "Flat terrain slope is zero",
+        "pass": true
+      },
+      {
+        "name": "Outside extent has no invented elevation",
+        "pass": true
+      },
+      {
+        "name": "Known 1km route and explicit consumption assumptions",
+        "pass": true
+      },
+      {
+        "name": "Zero length route has no useful metric",
+        "pass": true
+      },
+      {
+        "name": "Invalid speed is rejected",
+        "pass": true
+      },
+      {
+        "name": "Strict validity mask prevents interpolation across missing corner",
+        "pass": true
+      },
+      {
+        "name": "Route metrics reject nodata",
+        "pass": true
+      },
+      {
+        "name": "Sparse route cannot cross missing terrain unnoticed",
+        "pass": true
+      },
+      {
+        "name": "True slope uses metres over kilometres",
+        "pass": true
+      },
+      {
+        "name": "3D route distance and ascent use physical heights",
+        "pass": true
+      },
+      {
+        "name": "Steeper-than-20-degree endpoint rejected",
+        "pass": true
+      },
+      {
+        "name": "A* straight route on level terrain",
+        "pass": true
+      },
+      {
+        "name": "A* detours around nodata obstacle",
+        "pass": true
+      },
+      {
+        "name": "All returned points remain on valid terrain",
+        "pass": true
+      },
+      {
+        "name": "Disconnected coverage reports no route",
+        "pass": true
+      }
+    ]
+  },
+  "actualTerrain": {
+    "landing": {
+      "elevation": -2567.137451171873,
+      "slope": 1.8900835142511307,
+      "valid": true
+    },
+    "route": {
+      "distanceKm": 0.8161442566716111,
+      "ascentM": 2.1911026454231433,
+      "maxSlope": 3.0266679668042675,
+      "hours": 0.354845328987657,
+      "o2Percent": 4.4355666123457125,
+      "assumptions": {
+        "speedKmh": 2.3,
+        "o2PerHour": 12.5
+      },
+      "classification": "Derived terrain route; EVA consumption is simulated"
+    }
+  }
+}

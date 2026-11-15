@@ -1,3 +1,17 @@
+# Final ARES-NAV + Marswalk integration
+
+Team presentation: [judge Q&A and three-minute demo guide](JUDGES-GUIDE.md).
+
+Open **Jezero field lab ↗** below Explore + Measure. The field lab loads the team's actual Jezero CTX elevation export and processed CTX/HiRISE imagery, with numerical elevation/slope views, a historical Perseverance traverse, terrain-constrained route planning, preview playback and GeoJSON export. **Back to ARES-NAV** restores your current globe or surface view.
+
+ARES-NAV remains the host application. Its globe, four projections, eight GIS demo layers, USGS geology, rovers, particle surfaces, audio, astronaut, original A*, survival demo and AR remain available. The field lab has its own physical kilometre coordinate system so the older synthetic surface assumptions are not applied to measured terrain.
+
+Run `python3 -m http.server 8000` in this folder and open http://localhost:8000/. For GitHub Pages, publish these files at the repository root. Do not double-click index.html; browser ES modules require HTTP(S).
+
+Read [MARSWALK-SOURCES.md](MARSWALK-SOURCES.md) for provenance and [SUBMISSION-VERIFICATION.md](SUBMISSION-VERIFICATION.md) for tests and limitations. Terrain verification checks processing consistency, not centimetre-level physical accuracy. Proposed EVA resource budgets remain simulations, and NASA data does not imply NASA approval.
+
+---
+
 # Layer visibility fix
 
 See [LAYER-VISIBILITY-FIX.md](LAYER-VISIBILITY-FIX.md). Enabling a local layer now focuses its footprint; Whole globe restores the full planet.

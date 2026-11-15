@@ -1,0 +1,12 @@
+{
+  "js/vehicles.js": true,
+  "js/ar-mobile.js": true,
+  "js/audio.js": true,
+  "js/shaders.js": true,
+  "js/scientific-layer-manager.js": true,
+  "js/mars-quadtree-globe.js": true,
+  "js/data.js": true,
+  "models": true,
+  "vendor": true,
+  "htmlIDsPreserved": true
+}
