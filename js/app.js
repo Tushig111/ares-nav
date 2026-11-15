@@ -1,10 +1,17 @@
-import { bindControls } from './controls.js';
+import { createVehicles } from './vehicles.js?v=final1';
+import { createProjectionController } from './projections.js?v=final1';
+import { fetchDonkiCatalog, installProvenance } from './official-data.js?v=final1';
+import { MarsQuadtreeGlobe, spherePoint } from './mars-quadtree-globe.js?v=final1';
+import { createWorkbench } from './exploration-workbench.js?v=final1';
+import { createMobileAR } from './ar-mobile.js?v=final1';
+import { destination } from './geodesy.js?v=final1';
+import { bindControls } from './controls.js?v=final1';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { createSpaceAudioEngine } from './audio.js';
-import { SITES, LAYERS } from './data.js';
-import { hash2, valueNoise, fbm, ridgedFbm } from './noise.js';
-import { GLSL_PARTICLE_VERTEX_SHADER, GLSL_PARTICLE_FRAGMENT_SHADER, GLSL_SPARKLE_VERTEX_SHADER, GLSL_SPARKLE_FRAGMENT_SHADER, GLSL_TERRAIN_VERTEX_SHADER, GLSL_TERRAIN_FRAGMENT_SHADER } from './shaders.js';
+import { createSpaceAudioEngine } from './audio.js?v=final1';
+import { SITES, LAYERS } from './data.js?v=final1';
+import { hash2, valueNoise, fbm, ridgedFbm } from './noise.js?v=final1';
+import { GLSL_PARTICLE_VERTEX_SHADER, GLSL_PARTICLE_FRAGMENT_SHADER, GLSL_SPARKLE_VERTEX_SHADER, GLSL_SPARKLE_FRAGMENT_SHADER, GLSL_TERRAIN_VERTEX_SHADER, GLSL_TERRAIN_FRAGMENT_SHADER } from './shaders.js?v=final1';
 
 // 1. CHLADNI-PLATE AUTONOMOUS CYMATIC STANDING-WAVE GPU SHADERS
 //    C(x, z) = a * sin(PI * n * x) * sin(PI * m * z) + b * sin(PI * m * x) * sin(PI * n * z)
@@ -26,48 +33,34 @@ window.addEventListener('input', (e) => {
 });
 // 3. SITE PRESETS, CHLADNI MODES & PHOTO REFERENCES
 // 2B. HOT-SWAPPABLE NASA RESOURCE ADAPTER (src/config/nasaResources.ts)
-const DEFAULT_NASA_RESOURCES = {
-  optical: "https://trek.nasa.gov/tiles/Mars/EQ/Mars_Viking_MDIM21_ClrMosaic_global_232m/1.0.0/default/default028mm/{z}/{row}/{col}.jpg",
-  topography: "https://trek.nasa.gov/tiles/Mars/EQ/Mars_MGS_MOLA_ClrShade_merge_global_463m/1.0.0/default/default028mm/{z}/{row}/{col}.jpg",
-  thermal: "https://trek.nasa.gov/tiles/Mars/EQ/Mars_MO_THEMIS-IR-Day_mosaic_global_100m_v12/1.0.0/default/default028mm/{z}/{row}/{col}.png",
-  donkiSep: "https://api.nasa.gov/DONKI/SEP?api_key=DEMO_KEY"
-};
-const NASA_RESOURCES = { ...DEFAULT_NASA_RESOURCES };
-let donkiLiveInfo = { status: 'NOT CHECKED', latestTime: null, eventCount: 0, source: 'NASA DONKI' };
+const DEFAULT_NASA_RESOURCES = Object.freeze({
+ optical: "https://trek.nasa.gov/tiles/Mars/EQ/Mars_Viking_MDIM21_ClrMosaic_global_232m/1.0.0/default/default028mm/{z}/{row}/{col}.jpg",
+ topography: "https://trek.nasa.gov/tiles/Mars/EQ/Mars_MGS_MOLA_ClrShade_merge_global_463m/1.0.0/default/default028mm/{z}/{row}/{col}.jpg",
+ thermal: "Unavailable: no verified thermal tile endpoint",
+ donkiSep: "https://api.nasa.gov/DONKI/SEP?api_key=DEMO_KEY"
+});
+const NASA_RESOURCES = DEFAULT_NASA_RESOURCES;
+let donkiLiveInfo = { status: 'NOT CHECKED', eventCount: null };
 let donkiRequestId = 0;
-
-function resolveWmtsUrl(template, z, row, col) {
-  return template.replace('{z}', z).replace('{row}', row).replace('{y}', row).replace('{col}', col).replace('{x}', col);
-}
-
+function resolveWmtsUrl(template,z,row,col) { return template.replace('{z}',z).replace('{row}',row).replace('{col}',col); }
 async function fetchLiveDonkiSpaceWeather() {
-  const requestId = ++donkiRequestId;
-  const btn = document.getElementById('feed-status-btn');
-  const modalStatus = document.getElementById('donki-modal-status');
-  if (btn) btn.textContent = 'NASA Feed: Checking';
-  try {
-    const response = await fetch(NASA_RESOURCES.donkiSep, { signal: AbortSignal.timeout(4500) });
-    if (!response.ok) throw new Error(`NASA feed returned ${response.status}`);
-    const events = await response.json();
-    if (!Array.isArray(events)) throw new Error('Unexpected NASA feed format');
-    if (requestId !== donkiRequestId) return;
-    const latest = events.at(-1);
-    donkiLiveInfo = {
-      status: events.length ? 'LIVE SEP' : 'NO RECENT EVENTS',
-      latestTime: latest?.eventTime || null,
-      eventCount: events.length,
-      source: 'NASA DONKI API'
-    };
-    if (btn) btn.textContent = events.length ? 'NASA Feed: Connected' : 'NASA Feed: No events';
-    if (modalStatus) modalStatus.textContent = `${events.length} SEP events returned`;
-  } catch (error) {
-    if (requestId !== donkiRequestId) return;
-    donkiLiveInfo = { status: 'UNAVAILABLE', latestTime: null, eventCount: 0, source: 'Demo model only' };
-    if (btn) btn.textContent = 'NASA Feed: Unavailable';
-    if (modalStatus) modalStatus.textContent = 'Feed unavailable · demonstration values remain in use';
-    console.warn('NASA space-weather request failed:', error);
-  }
+ const requestId=++donkiRequestId;
+ const result=await fetchDonkiCatalog();
+ if(requestId!==donkiRequestId)return;
+ donkiLiveInfo=result;
+ for(const id of ['feed-status-btn','donki-modal-status']) {
+  const el=document.getElementById(id); if(el)el.textContent=`DONKI catalog: ${result.status}${result.eventCount===null?'':` (${result.eventCount} / 30 days)`}`;
+ }
+ document.dispatchEvent(new CustomEvent('donki-catalog',{detail:result}));
 }
+
+let upgrades = null;
+let mobileAR = null;
+let vehicles = null;
+let progressiveGlobe = null;
+let projectionView = null;
+let survivalSavedRoute = null;
+const MOBILE = matchMedia('(max-width: 767px)').matches;
 
 const state = {
   mode: 'orbital',
@@ -158,90 +151,18 @@ const ORBITAL_MOUNTAINS = [
 ];
 
 function createMarsPlanetaryMaps() {
-  const W = 2048, H = 1024;
-  const canvas = document.createElement('canvas');
-  canvas.width = W;
-  canvas.height = H;
-  const context = canvas.getContext('2d');
-  // A plain placeholder is never presented as a substitute Mars map.
-  context.fillStyle = '#555555';
-  context.fillRect(0, 0, W, H);
-  const albedoTex = new THREE.CanvasTexture(canvas);
-  albedoTex.colorSpace = THREE.SRGBColorSpace;
-  albedoTex.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
-  let requestId = 0;
-
-  const showStatus = (message) => {
-    document.getElementById('globe-imagery-status').textContent = message;
-  };
-
-  function loadTile(url) {
-    return new Promise((resolve, reject) => {
-      const image = new Image();
-      image.crossOrigin = 'anonymous';
-      const timeout = setTimeout(() => {
-        image.onload = image.onerror = null;
-        image.src = '';
-        reject(new Error('NASA imagery request timed out'));
-      }, 15000);
-      image.onload = () => { clearTimeout(timeout); resolve(image); };
-      image.onerror = () => { clearTimeout(timeout); reject(new Error('NASA imagery could not be loaded')); };
-      image.src = url;
-    });
-  }
-
-  async function loadLevel(template, level, id) {
-    // Mars Trek's advertised equirectangular matrix: 2^(z+1) columns, 2^z rows.
-    const columns = 2 ** (level + 1);
-    const rows = 2 ** level;
-    const tiles = await Promise.all(Array.from({ length: columns * rows }, async (_, index) => {
-      const row = Math.floor(index / columns);
-      const column = index % columns;
-      return { image: await loadTile(resolveWmtsUrl(template, level, row, column)), row, column };
-    }));
-    if (id !== requestId) return false;
-    // Only swap a complete level; late coarse tiles cannot overwrite sharper ones.
-    for (const { image, row, column } of tiles) {
-      context.drawImage(image, column * W / columns, row * H / rows, W / columns, H / rows);
-    }
-    albedoTex.needsUpdate = true;
-    return true;
-  }
-
-  async function reloadGlobeImagery() {
-    const id = ++requestId;
-    const template = NASA_RESOURCES.optical;
-    const isNasa = template === DEFAULT_NASA_RESOURCES.optical;
-    const source = isNasa ? 'NASA Mars Trek · Viking global mosaic' : 'Custom optical imagery';
-    // Clear previous endpoint data so it cannot be mistaken for the new source.
-    context.fillStyle = '#555555';
-    context.fillRect(0, 0, W, H);
-    albedoTex.needsUpdate = true;
-    showStatus('Loading globe imagery…');
-    let baseLoaded = false;
-    try {
-      if (!await loadLevel(template, 0, id)) return;
-      baseLoaded = true;
-      showStatus(`${source} · base map`);
-      if (!await loadLevel(template, 2, id)) return;
-      showStatus(`${source} · 2048 × 1024`);
-    } catch (error) {
-      if (id !== requestId) return;
-      showStatus(baseLoaded ? `${source} · base map (detail unavailable)` : 'Globe imagery unavailable · blank sphere');
-      console.warn('Globe imagery:', error);
-    }
-  }
-
-  reloadGlobeImagery();
-  // No measured elevation is decoded from this optical image layer.
-  const heightField = new Float32Array(W * H);
-  return { albedoTex, heightField, W, H, reloadGlobeImagery };
+  // Neutral backing only. Observational imagery comes from the progressive tile tree.
+  const W = 4, H = 2;
+  const canvas = document.createElement('canvas');canvas.width=W;canvas.height=H;
+  const ctx=canvas.getContext('2d');ctx.fillStyle='#49423e';ctx.fillRect(0,0,W,H);
+  const albedoTex=new THREE.CanvasTexture(canvas);albedoTex.colorSpace=THREE.SRGBColorSpace;
+  return { albedoTex, heightField:new Float32Array(W*H), W, H };
 }
 // 5. THREE.JS SCENE, 3D CHLADNI SPARKLE VORTEX & HIGH-LOD MOLA MARS GLOBE
 const container = document.getElementById('canvas-container');
-const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, stencil: true, powerPreference: 'high-performance' });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, MOBILE ? 1.5 : 2));
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.15;
 container.appendChild(renderer.domElement);
@@ -249,7 +170,7 @@ container.appendChild(renderer.domElement);
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x030407);
 
-const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.04, 1600);
+const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.01, 1600);
 camera.position.set(0, 3.2, 13.5);
 
 const controls = new OrbitControls(camera, renderer.domElement);
@@ -257,11 +178,12 @@ controls.enableDamping = true;
 controls.dampingFactor = 0.055;
 controls.rotateSpeed = 0.72;
 controls.zoomSpeed = 1.25;
-controls.minDistance = 4.82;
+controls.minDistance = 4.64;
 controls.maxDistance = 30;
 controls.enablePan = false;
 
 controls.addEventListener('start', () => {
+  vehicles?.stopFollowing();
   state.isCameraTransitioning = false;
 });
 
@@ -301,7 +223,7 @@ scene.add(new THREE.Points(
 ));
 
 // 3,600-Particle 3D Chladni Sparkle Vortex & Weather Dust-Devil Stream
-const SPARKLE_COUNT = 3600;
+const SPARKLE_COUNT = MOBILE ? 1200 : 3600;
 const sparkleGeo = new THREE.BufferGeometry();
 const sparkleBaseOrbit = new Float32Array(SPARKLE_COUNT * 3);
 const sparkleSeeds = new Float32Array(SPARKLE_COUNT);
@@ -348,7 +270,7 @@ const orbitalGroup = new THREE.Group();
 scene.add(orbitalGroup);
 
 const MARS_RADIUS = 4.6;
-const { albedoTex, heightField, W: MAP_W, H: MAP_H, reloadGlobeImagery } = createMarsPlanetaryMaps();
+const { albedoTex, heightField, W: MAP_W, H: MAP_H } = createMarsPlanetaryMaps();
 
 function sampleGlobeElevation(lat, lon) {
   const u = ((lon + 180) % 360 + 360) % 360 / 360;
@@ -358,7 +280,7 @@ function sampleGlobeElevation(lat, lon) {
   return heightField[py * MAP_W + px] || 0;
 }
 
-// Smooth reference sphere: the optical mosaic does not supply measured elevation.
+// Smooth, realistic 256x192 MOLA 3D Globe Geometry with subtle authentic relief (subtle relief)
 const marsGeo = new THREE.SphereGeometry(MARS_RADIUS, 256, 192);
 const mPos = marsGeo.attributes.position;
 const mUv = marsGeo.attributes.uv;
@@ -370,16 +292,19 @@ for (let i = 0; i < mPos.count; i++) {
   const py = Math.min(MAP_H - 1, Math.max(0, Math.floor(v * MAP_H)));
   const elev = heightField[py * MAP_W + px] || 0;
   tmpV.fromBufferAttribute(mPos, i).normalize();
-  tmpV.multiplyScalar(MARS_RADIUS + elev * 0.042);
+  tmpV.multiplyScalar(MARS_RADIUS - 0.015 + elev * 0.042);
   mPos.setXYZ(i, tmpV.x, tmpV.y, tmpV.z);
 }
 marsGeo.computeVertexNormals();
+
+// Custom Zoom-Adaptive Crisp Micro-Terrain Detail Shader (smooth shading)
+
 
 const marsMat = new THREE.MeshStandardMaterial({
   map: albedoTex,
   normalScale: new THREE.Vector2(0.88, 0.88),
   roughness: 0.90,
-  metalness: 0.0
+  metalness: 0.04
 });
 
 
@@ -392,7 +317,7 @@ marsMat.transparent = true;
 marsMat.opacity = 0.0;
 
 // 14,400-Particle 3D Martian Particle Globe that coalesces & translates into the actual Martian Globe on launch
-const GLOBE_PARTICLE_COUNT = 14400;
+const GLOBE_PARTICLE_COUNT = MOBILE ? 4800 : 14400;
 const globePGeo = new THREE.BufferGeometry();
 const globePTarget = new Float32Array(GLOBE_PARTICLE_COUNT * 3);
 const globePColor  = new Float32Array(GLOBE_PARTICLE_COUNT * 3);
@@ -640,7 +565,7 @@ const mountainMarkers = ORBITAL_MOUNTAINS.map((mtn) => {
   const el = document.createElement('div');
   el.className = 'mountain-marker';
   el.title = 'Click to zoom close to this Martian mountain in 3D Orbital View (Double-click for Surface EVA)';
-  const signStr = mtn.elevM > 0 ? `+${mtn.elevM.toLocaleString()}m` : `${mtn.elevM.toLocaleString()}m`;
+  const signStr = 'approximate feature locator';
   el.innerHTML = `
     <div class="mountain-chip">
       <span class="mountain-tri">▲</span>
@@ -767,7 +692,7 @@ const markerEls = SITES.map((site, idx) => {
     <div class="marker-tag">
       <span class="marker-pulse"></span>
       <span class="marker-name">0${idx + 1} · ${site.shortName}</span>
-      <span class="marker-sub">${site.baseElevM > 0 ? '+' : ''}${site.baseElevM}m</span>
+      <span class="marker-sub">SIM elevation ${site.baseElevM}m</span>
     </div>
     <div class="marker-stem"></div>
   `;
@@ -792,7 +717,7 @@ scene.add(surfaceGroup);
 
 const DEM_SIZE = 104;
 const DEM_SEGMENTS = 192;
-const PARTICLE_GRID = 240;
+const PARTICLE_GRID = MOBILE ? 120 : 240;
 const PARTICLE_COUNT = PARTICLE_GRID * PARTICLE_GRID; // 57,600 GPU particles
 
 function evaluateSitePoint(siteId, x, z) {
@@ -902,18 +827,6 @@ function createSiteHighResTexture(siteIdx) {
   tex.wrapT = THREE.ClampToEdgeWrapping;
   tex.anisotropy = 8;
 
-  const tileImg = new Image();
-  tileImg.crossOrigin = 'anonymous';
-  tileImg.onload = () => {
-    ctx.globalAlpha = 0.34;
-    ctx.globalCompositeOperation = 'overlay';
-    ctx.drawImage(tileImg, 0, 0, W, H);
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.globalAlpha = 1.0;
-    tex.needsUpdate = true;
-  };
-  const t = s.wmtsTile;
-  tileImg.src = resolveWmtsUrl(NASA_RESOURCES.optical, t.z, t.row, t.col);
 
   return tex;
 }
@@ -1817,13 +1730,8 @@ function openNasaReconModal(wp, site = SITES[state.siteIndex], wpIdx = state.sel
 
   const photoList = site.nasaPhotos || [];
   const photoIdx = ((wpIdx >= 0 ? wpIdx : 0) + state.reconPhotoVariant) % Math.max(1, photoList.length);
-  const photoObj = photoList[photoIdx] || {
-    pia: "PIA26551",
-    sol: "SOL 4447",
-    cam: "NASA MSL MASTCAM",
-    url: "https://d2pn8kiwq2w21t.cloudfront.net/images/jpegPIA26551.width-1024.jpg",
-    caption: "Authentic NASA surface reconnaissance photograph."
-  };
+  const photoObj = photoList[photoIdx];
+  if (!photoObj) return;
 
   renderProceduralMastcamScene(wp, site, photoObj);
 
@@ -1847,22 +1755,23 @@ function openNasaReconModal(wp, site = SITES[state.siteIndex], wpIdx = state.sel
 
   document.getElementById('recon-cam-instrument').textContent = photoObj.cam;
   document.getElementById('recon-pia-id').textContent = `NASA JPL ARCHIVE · ${photoObj.pia}`;
-  document.getElementById('recon-sol-temp').textContent = `${photoObj.sol} · ${site.weather.tempC}°C`;
-  document.getElementById('recon-target-name').textContent = wp.name.toUpperCase();
-  document.getElementById('recon-coords-tag').textContent = `(${wp.x.toFixed(1)}m, ${wp.z.toFixed(1)}m)`;
+  document.getElementById('recon-sol-temp').textContent = photoObj.sol;
+  document.getElementById('recon-target-name').textContent = photoObj.caption.split('. ')[0];
+  document.getElementById('recon-coords-tag').textContent = `SIM waypoint (${wp.x.toFixed(1)}m, ${wp.z.toFixed(1)}m)`;
   document.getElementById('recon-elev-val').textContent = `${elevM > 0 ? '+' : ''}${elevM} m`;
   document.getElementById('recon-slope-val').textContent = `${slopeDeg}°`;
   document.getElementById('recon-ti-val').textContent = `${tiVal} TIU`;
   document.getElementById('recon-chladni-val').textContent = `(${site.chladni[0]}, ${site.chladni[1]})`;
 
   const descEl = document.getElementById('recon-desc-text');
-  descEl.style.opacity = '0.25';
-  setTimeout(() => {
-    descEl.innerHTML =
-      `<strong>${wp.name} (${photoObj.pia} · ${wp.tool}):</strong> ${photoObj.caption} ` +
-      `Local MOLA elevation <strong>${elevM}m</strong>, terrain slope <strong>${slopeDeg}°</strong>.`;
-    descEl.style.opacity = '1';
-  }, 120);
+  descEl.replaceChildren(document.createTextNode(photoObj.caption+' '+photoObj.productKind+' '));
+  for(const [label,url] of [['NASA catalog',photoObj.sourceURL],['Mission raw gallery (separate collection)',photoObj.rawGalleryURL]]) {
+   if(!url)continue; const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';a.textContent=label+' · ';descEl.append(a);
+  }
+  const status=document.createElement('p');status.textContent='Loading official archive image. Background preview is synthetic.';descEl.append(status);
+  imgEl.onload=()=>{imgEl.classList.add('loaded');status.textContent='Official NASA archive image. Local metrics below are SIMULATED, not image measurements.';};
+  imgEl.onerror=()=>{imgEl.classList.remove('loaded');status.textContent='Archive image unavailable. Visible background is a SYNTHETIC illustration; open NASA catalog.';};
+  imgEl.src=photoObj.url;
 
   card.classList.add('open');
   document.body.classList.add('recon-open');
@@ -2122,6 +2031,7 @@ function intersectTerrainSurface() {
 }
 
 renderer.domElement.addEventListener('pointerdown', (e) => {
+  if (mobileAR?.active || upgrades?.measurements.enabled) return;
   pointerDownPos = { x: e.clientX, y: e.clientY };
   lastPointerPos = { x: e.clientX, y: e.clientY };
   if (state.mode !== 'orbital' && state.povMode !== 'free') {
@@ -2134,6 +2044,7 @@ window.addEventListener('pointerup', () => {
 });
 
 renderer.domElement.addEventListener('pointermove', (e) => {
+  if (mobileAR?.active || upgrades?.measurements.enabled) return;
   if (state.mode === 'orbital') return;
 
   // Allow smooth, comfortable manual look-around when in Shoulder or Visor POV
@@ -2161,7 +2072,7 @@ renderer.domElement.addEventListener('pointermove', (e) => {
       const slope = getSiteSlopeDeg(state.siteIndex, pt.x, pt.z).toFixed(1);
       const elev = Math.round(SITES[state.siteIndex].baseElevM + exactY * 18);
       document.getElementById('drop-wp-coords').textContent =
-        `DROP TARGET: (${pt.x.toFixed(1)}m, ${pt.z.toFixed(1)}m) · ELEV ${elev}m · SLOPE ${slope}°`;
+        `DROP TARGET: (${pt.x.toFixed(1)}m, ${pt.z.toFixed(1)}m) · SIM ELEV ${elev}m · SLOPE ${slope}°`;
     } else {
       dropPreviewGroup.visible = false;
     }
@@ -2173,6 +2084,7 @@ renderer.domElement.addEventListener('pointermove', (e) => {
 });
 
 renderer.domElement.addEventListener('pointerup', (e) => {
+  if (mobileAR?.active || upgrades?.measurements.enabled) return;
   if (state.mode === 'orbital') return;
   const moveDist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
   if (moveDist > 9) return;
@@ -2303,7 +2215,7 @@ function updateWaypointInspectorUI() {
   const elev = Math.round(site.baseElevM + getSiteHeight(state.siteIndex, wp.x, wp.z) * 18);
   const slope = getSiteSlopeDeg(state.siteIndex, wp.x, wp.z).toFixed(1);
   document.getElementById('wpi-name').textContent = `WP: ${wp.name}`;
-  document.getElementById('wpi-metrics').textContent = `Elev: ${elev}m · Slope: ${slope}° · TI: ${site.thermalInertia} TIU`;
+  document.getElementById('wpi-metrics').textContent = `SIM Elev: ${elev}m · Slope: ${slope}° · TI: ${site.thermalInertia} TIU`;
   document.getElementById('wpi-tool').textContent = `Tool: ${wp.tool || site.instrument}`;
 }
 
@@ -2372,7 +2284,7 @@ function updateWeatherUI() {
     subText = `Regional Dust Storm Haze · τ = 1.92`;
   } else if (state.weatherPreset === 'storm' || state.sepStorm) {
     uv = `SEP ALERT (${site.stormRad} mSv)`;
-    subText = `MAVEN SEP Proton Event · Seek Subsurface Shelter`;
+    subText = `SIMULATED SEP scenario · no measured Mars dose`;
   }
 
   document.getElementById('wx-temp').textContent = `${temp}°C`;
@@ -2380,7 +2292,7 @@ function updateWeatherUI() {
   document.getElementById('wx-wind').textContent = `${wind} m/s ${wx.windDir}`;
   document.getElementById('wx-tau').textContent = `τ ${tau}`;
   document.getElementById('wx-uv').textContent = uv;
-  document.getElementById('wx-condition-sub').textContent = subText;
+  document.getElementById('wx-condition-sub').textContent = 'SIMULATION — '+subText+' · not calibrated to REMS/MEDA';
 }
 
 window.setWeatherPreset = (preset) => {
@@ -2410,7 +2322,7 @@ window.setWeatherPreset = (preset) => {
     showToast("Mars Weather: Clear Sol Nominal Conditions");
   }
   updateWeatherUI();
-  renderCrismSpectralPlot(idx);
+  renderCrismSpectralPlot(state.siteIndex);
   if (state.uhfViewshed) computeUhfViewshed();
   if (document.getElementById('nasa-recon-card').classList.contains('open')) {
     const wp = state.waypoints[state.selectedWp] || state.waypoints[0];
@@ -2482,7 +2394,7 @@ profileCanvas.addEventListener('pointermove', (e) => {
   scrubRing.position.set(pt.x, pt.y + 0.15, pt.z);
   scrubRing.visible = true;
   document.getElementById('profile-hover-readout').textContent =
-    `Dist: ${(normX * state.totalTraverseKm).toFixed(2)} km · Elev: ${elev} m · Slope: ${slope.toFixed(1)}°`;
+    `SIM Dist: ${(normX * state.totalTraverseKm).toFixed(2)} km · Elev: ${elev} m · Slope: ${slope.toFixed(1)}°`;
   drawElevationProfile(idx);
 });
 
@@ -2590,6 +2502,8 @@ window.toggleSuitDemoShowcase = () => {
 };
 
 window.setMode = (newMode) => {
+  surfaceParticles.visible=true;routeGroup.visible=true;astronautRig.root.visible=true;
+  projectionView?.reset();
   const prevMode = state.mode;
   state.mode = newMode;
   state.lastModeSwitchTime = performance.now();
@@ -2641,10 +2555,10 @@ window.setMode = (newMode) => {
     sparkleShaderMat.uniforms.uOrbitalScale.value = 0.22;
 
     controls.enablePan = false;
-    controls.minDistance = 4.82; // Zoom right down to single mountains on the globe!
+    controls.minDistance = 4.64; // Zoom right down to single mountains on the globe!
     controls.maxDistance = 30;
     controls.maxPolarAngle = Math.PI;
-    document.getElementById('caption-kicker').textContent = 'NASA MARS TREK · VIKING IMAGERY ON A REFERENCE SPHERE';
+    document.getElementById('caption-kicker').textContent = 'NASA IMAGERY · REFERENCE SPHERE · DERIVED MARKERS';
 
     const targetVec = latLonToVec3(s.lat, s.lon, 13.2);
     targetVec.applyAxisAngle(new THREE.Vector3(0, 1, 0), marsMesh.rotation.y);
@@ -2674,7 +2588,7 @@ window.setMode = (newMode) => {
       particleShaderMat.uniforms.uPointSize.value = 1.55;
       particleShaderMat.uniforms.uOpacityScale.value = state.placeDemoActive ? 0.34 : 0.0;
       placeDemoGroup.visible = state.placeDemoActive;
-      document.getElementById('caption-kicker').textContent = 'CHLADNI CYMATIC 3D SURFACE · MOLA + CRISM + THEMIS';
+      document.getElementById('caption-kicker').textContent = 'SYNTHETIC SURFACE · NASA-INSPIRED DEMONSTRATION';
     } else if (newMode === 'particles') {
       // Strictly hide solid terrain mesh & basic landmark objects (arch/cavern/mesas/walls) so ZERO objects are left behind!
       terrainMesh.visible = false;
@@ -2684,7 +2598,7 @@ window.setMode = (newMode) => {
       scrubRing.visible = false;
       particleShaderMat.uniforms.uPointSize.value = 2.65;
       particleShaderMat.uniforms.uOpacityScale.value = 1.0;
-      document.getElementById('caption-kicker').textContent = 'CHLADNI STANDING-WAVE PARTICLE CLOUD · 57,600 PTS';
+      document.getElementById('caption-kicker').textContent = `CHLADNI STANDING-WAVE PARTICLE CLOUD · ${PARTICLE_COUNT.toLocaleString()} PTS`;
     }
 
     if (prevMode === 'orbital' && state.povMode === 'free') {
@@ -2694,22 +2608,29 @@ window.setMode = (newMode) => {
 };
 
 window.stepZoom = (dir) => {
+  if (camera.isOrthographicCamera) { camera.zoom=THREE.MathUtils.clamp(camera.zoom*(dir>0?1.6:1/1.6),controls.minZoom,controls.maxZoom);camera.updateProjectionMatrix();progressiveGlobe?.invalidate();return; }
   if (state.povMode !== 'free') {
     state.povMode = 'free';
     syncPOVButtonUI();
   }
   state.suitDemoActive = false;
   syncSuitDemoUI();
-  const offset = camera.position.clone().sub(controls.target);
+  const offset = state.mode === 'orbital' && state.isCameraTransitioning
+    ? state.cameraTargetPos.clone().sub(state.cameraTargetLook)
+    : camera.position.clone().sub(controls.target);
   const factor = dir > 0 ? 0.68 : 1.42;
-  const minD = state.mode === 'orbital' ? 4.82 : 1.25;
+  const minD = state.mode === 'orbital' ? 4.64 : 1.25;
   const maxD = state.mode === 'orbital' ? 30.0 : 145.0;
-  const nextLen = Math.max(minD, Math.min(maxD, offset.length() * factor));
+  const desired = state.mode === 'orbital'
+    ? MARS_RADIUS + Math.max(0.04, offset.length() - MARS_RADIUS) * (dir > 0 ? 0.62 : 1.6)
+    : offset.length() * factor;
+  const nextLen = Math.max(minD, Math.min(maxD, desired));
   offset.setLength(nextLen);
   animateCameraTo(controls.target.clone().add(offset), controls.target.clone(), camera.fov);
 };
 
 window.selectSite = (indexStr) => {
+  projectionView?.reset();
   const idx = (parseInt(indexStr, 10) + SITES.length) % SITES.length;
   state.siteIndex = idx;
   document.getElementById('site-select').value = String(idx);
@@ -2825,7 +2746,7 @@ window.toggleNadirView = () => {
 window.toggleStorm = () => {
   state.sepStorm = !state.sepStorm;
   const btn = document.getElementById('storm-btn');
-  btn.textContent = state.sepStorm ? 'SEP: STORM ALERT' : 'SEP: Nominal';
+  btn.textContent = state.sepStorm ? 'SEP DEMO: On ALERT' : 'SEP DEMO: Off';
   btn.classList.toggle('storm-active', state.sepStorm);
 
   atmoMat.uniforms.stormFactor.value = state.sepStorm ? 1.0 : 0.0;
@@ -2841,7 +2762,7 @@ window.toggleStorm = () => {
 
   if (state.sepStorm) {
     spaceAudio.playGeigerPulse();
-    showToast("MAVEN Alert: Solar Energetic Particle (SEP) Event Active");
+    showToast("SIMULATED SEP scenario active — not a DONKI Mars warning");
   } else {
     showToast("Space Weather Nominal: 0.64 mSv/day");
   }
@@ -2885,7 +2806,7 @@ window.resetSiteRoute = () => {
   state.selectedWp = 0;
   rebuildRouteGeometry();
   renderWaypointList();
-  showToast("Route reset to nominal NASA baseline");
+  showToast("Route reset to illustrative scenario baseline");
 };
 
 window.setRelief = (val) => {
@@ -2929,24 +2850,41 @@ function formatMetricDistance(meters) {
 }
 
 function updateZoomScaleAndDestinationHUD(remKm) {
+  if (camera.isOrthographicCamera) {
+    const kmPerPixel=(camera.top-camera.bottom)/camera.zoom/(renderer.domElement.clientHeight||800)*3389.5/MARS_RADIUS;
+    const raw=kmPerPixel*90, magnitude=10**Math.floor(Math.log10(raw));
+    const km=[1,2,5,10].map(v=>v*magnitude).reduce((a,b)=>Math.abs(a-raw)<Math.abs(b-raw)?a:b);
+    hudZoomRatioEl.textContent=`${camera.zoom.toFixed(1)}×`;
+    hudCamAltEl.textContent='ORTHOGRAPHIC';hudScaleLabelEl.textContent=`${km.toLocaleString()} km projected`;
+    hudScaleLineEl.style.width=`${km/kmPerPixel}px`;
+    hudScaleLineEl.title='Scale on the orthographic image plane; surface scale varies across the hemisphere';return;
+  }
   const camDist = camera.position.distanceTo(controls.target);
 
   if (state.mode === 'orbital') {
-    const zoomRatio = (13.5 / Math.max(4.82, camDist)).toFixed(1);
-    const altKm = Math.round(Math.max(85, (camDist - MARS_RADIUS) * 720));
-    const rawScaleKm = Math.max(25, (camDist - MARS_RADIUS * 0.82) * 145);
-    const niceSteps = [25, 50, 100, 200, 500, 1000, 1500, 2000, 3000];
-    const chosenKm = niceSteps.reduce((prev, curr) =>
-      Math.abs(curr - rawScaleKm) < Math.abs(prev - rawScaleKm) ? curr : prev
-    );
-    const barPx = Math.max(40, Math.min(88, Math.round((chosenKm / rawScaleKm) * 62)));
+    const zoomRatio = (13.5 / Math.max(4.64, camDist)).toFixed(1);
+    const planetRadiusKm = 3389.5;
+    const altKm = Math.max(0, (camDist - MARS_RADIUS) * planetRadiusKm / MARS_RADIUS);
+    // Exact symmetric ray/sphere intersections give a scale at the view centre.
+    const viewportHeight = renderer.domElement.clientHeight || window.innerHeight;
+    const tanHalfFov = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+    const theta = Math.min(Math.atan(64 * tanHalfFov / viewportHeight), Math.asin(MARS_RADIUS / camDist) * 0.8);
+    const rayDistance = camDist * Math.cos(theta) - Math.sqrt(Math.max(0, MARS_RADIUS ** 2 - camDist ** 2 * Math.sin(theta) ** 2));
+    const halfArc = Math.atan2(rayDistance * Math.sin(theta), camDist - rayDistance * Math.cos(theta));
+    const rawScaleKm = 2 * halfArc * planetRadiusKm;
+    const niceSteps = [0.25, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 1500, 2000, 3000];
+    const chosenKm = niceSteps.reduce((prev, curr) => Math.abs(curr - rawScaleKm) < Math.abs(prev - rawScaleKm) ? curr : prev);
+    const halfScaleArc = chosenKm / (2 * planetRadiusKm);
+    const halfScaleTheta = Math.atan2(MARS_RADIUS * Math.sin(halfScaleArc), camDist - MARS_RADIUS * Math.cos(halfScaleArc));
+    const barPx = viewportHeight * Math.tan(halfScaleTheta) / tanHalfFov;
 
     hudZoomRatioEl.textContent = `${zoomRatio}x`;
-    hudCamAltEl.textContent = `ALT ${altKm.toLocaleString()} km`;
+    hudCamAltEl.textContent = `ALT ${altKm.toLocaleString(undefined, { maximumFractionDigits: altKm < 100 ? 1 : 0 })} km`;
     hudScaleLabelEl.textContent = `${chosenKm.toLocaleString()} km`;
     hudScaleLineEl.style.width = `${barPx}px`;
+    hudScaleLineEl.title = "Geodesic scale at the view centre";
   } else {
-    const zoomRatio = (38.0 / Math.max(1.25, camDist)).toFixed(1);
+    const zoomRatio = (38.0 / Math.max(controls.minDistance, camDist)).toFixed(1);
     const altMeters = Math.max(2, Math.round(camDist * 24));
     const rawScaleM = camDist * 9.5;
     const niceStepsM = [5, 10, 25, 50, 100, 200, 500, 1000, 2000];
@@ -2990,7 +2928,10 @@ function updateAstronautBiomechanics(dt, elapsed) {
   const slopeFactor = Math.max(0.55, 1.0 - (localSlopeDeg / 45.0));
 
   if (state.astronautSpeed > 0.001 && !state.suitDemoActive) {
-    state.evaProgress = (state.evaProgress + dt * 0.036 * state.astronautSpeed * slopeFactor) % 1.0;
+    state.evaProgress = state.survivalRouteActive
+      ? Math.min(1, state.evaProgress + dt * 0.036 * state.astronautSpeed * slopeFactor)
+      : (state.evaProgress + dt * 0.036 * state.astronautSpeed * slopeFactor) % 1.0;
+    if (state.survivalRouteActive && state.evaProgress >= 1) state.astronautSpeed = 0;
     state.walkCycleTime += dt * 6.0 * state.astronautSpeed * slopeFactor;
   }
 
@@ -3224,10 +3165,16 @@ const clock = new THREE.Clock();
 const projVec = new THREE.Vector3();
 const camNormal = new THREE.Vector3();
 
-function animate() {
-  requestAnimationFrame(animate);
+let fpsStart=0, fpsFrames=0;
+function animate(time, frame) {
+  fpsFrames++; if(time-fpsStart>=1000){const label=document.getElementById('brand-telemetry');if(label)label.textContent=`CHLADNI GPU · ${Math.round(fpsFrames*1000/(time-fpsStart))} FPS`;fpsFrames=0;fpsStart=time;}
   const dt = Math.min(clock.getDelta(), 0.05);
   const elapsed = clock.getElapsedTime();
+  if (mobileAR?.active) { mobileAR.update(time, frame); return; }
+  upgrades?.update(dt);
+  vehicles?.update(dt);
+  projectionView?.update();
+  progressiveGlobe?.update(marsMat.opacity);
 
   particleShaderMat.uniforms.uTime.value = elapsed;
   sparkleShaderMat.uniforms.uTime.value = elapsed;
@@ -3288,25 +3235,33 @@ function animate() {
 
   if (state.isCameraTransitioning && state.povMode === 'free' && !state.suitDemoActive) {
     state.cameraTransitionTimer += dt;
-    const alpha = 1.0 - Math.exp(-7.5 * dt);
+    const closeOrbital = state.mode === 'orbital' && state.cameraTargetPos.distanceTo(state.cameraTargetLook) < MARS_RADIUS + 1;
+    const alpha = 1.0 - Math.exp(-(closeOrbital ? 10.0 : 7.5) * dt);
     camera.position.lerp(state.cameraTargetPos, alpha);
     controls.target.lerp(state.cameraTargetLook, alpha);
     camera.fov = THREE.MathUtils.lerp(camera.fov, state.cameraTargetFov, alpha);
     camera.updateProjectionMatrix();
 
     if (
-      camera.position.distanceTo(state.cameraTargetPos) < 0.08 ||
+      camera.position.distanceTo(state.cameraTargetPos) < (closeOrbital ? 0.00001 : 0.08) ||
       state.cameraTransitionTimer > 1.35
     ) {
       state.isCameraTransitioning = false;
+      if (closeOrbital) {
+        camera.position.copy(state.cameraTargetPos);
+        controls.target.copy(state.cameraTargetLook);
+      }
     }
   }
 
   if (state.mode === 'orbital') {
     const camDist = camera.position.distanceTo(controls.target);
+
     // Altitude-adaptive rotation speed so zooming close to a single mountain feels effortless like Google Earth
-    const altFrac = THREE.MathUtils.clamp((camDist - MARS_RADIUS) / 8.5, 0.06, 1.0);
-    controls.rotateSpeed = 0.07 + altFrac * 0.65;
+    const altitude = Math.max(0.04, camDist - MARS_RADIUS);
+    const altitudeRatio = altitude / Math.max(camDist, MARS_RADIUS);
+    controls.rotateSpeed = THREE.MathUtils.clamp(altitudeRatio * 0.9, 0.004, 0.72);
+    controls.zoomSpeed = camera.isOrthographicCamera ? .8 : THREE.MathUtils.clamp(altitudeRatio * 4, 0.02, 1.25);
 
     if (state.autoSpin && !state.isCameraTransitioning && camDist > 7.2) {
       marsMesh.rotation.y += dt * 0.095;
@@ -3387,6 +3342,7 @@ function animate() {
     updateZoomScaleAndDestinationHUD(state.totalTraverseKm);
   } else {
     controls.rotateSpeed = 0.72;
+    controls.zoomSpeed = 1.25;
     markerEls.forEach(el => {
       el.style.opacity = '0';
       el.style.pointerEvents = 'none';
@@ -3625,7 +3581,7 @@ function renderCrismSpectralPlot(siteIdx) {
   const bandEl = document.getElementById('spectral-band-tag');
   if (!svg) return;
   const site = SITES[siteIdx];
-  if (titleEl) titleEl.textContent = `CRISM → ${site.instrument}`;
+  if (titleEl) titleEl.textContent = `SIMULATED spectrum · no CRISM observation loaded`;
   if (bandEl) bandEl.textContent = site.mineralName.split('(')[0].trim();
 
   const dips = [
@@ -3665,11 +3621,13 @@ function renderCrismSpectralPlot(siteIdx) {
 window.exportEvaManifest = (fmt) => {
   const site = SITES[state.siteIndex];
   const manifest = {
-    mission: "ARES-NAV 2026 NASA Space Apps EVA Flight Plan",
+    mission: "ARES-NAV illustrative EVA scenario",
+    provenance: site.provenance,
+    warning: "Local terrain, weather, spectra, dose, physiology, route and shelter values are synthetic. Not operational guidance.",
     generatedAt: new Date().toISOString(),
     site: site.name,
     coordinates: site.coords,
-    molaBaseElevationM: site.baseElevM,
+    syntheticBaseElevationM: site.baseElevM,
     totalTraverseKm: +state.totalTraverseKm.toFixed(2),
     xemuO2ReservePct: state.o2ReservePct,
     uhfCommsLinked: state.uhfLinked,
@@ -3692,10 +3650,13 @@ window.exportEvaManifest = (fmt) => {
   if (fmt === 'md') {
     mime = 'text/markdown';
     ext = 'md';
-    content = `# ARES-NAV EVA Flight Plan — ${site.name}
+    content = `# ARES-NAV SIMULATED EVA scenario — ${site.name}
+
+All local numeric values and waypoints are synthetic; not operational guidance. Mapping context: ${site.provenance.mappingReference}
+
 
 ` +
-      `- **Coordinates:** ${site.coords} (MOLA ${site.baseElevM} m)
+      `- **Coordinates:** ${site.coords} (synthetic elevation ${site.baseElevM} m)
 ` +
       `- **Traverse Distance:** ${manifest.totalTraverseKm} km | **xEMU O₂ Reserve:** ${manifest.xemuO2ReservePct}%
 ` +
@@ -3736,29 +3697,13 @@ window.toggleNasaFeedModal = (open) => {
     document.getElementById('feed-url-topo').value = NASA_RESOURCES.topography;
     document.getElementById('feed-url-thermal').value = NASA_RESOURCES.thermal;
     document.getElementById('feed-url-donki').value = NASA_RESOURCES.donkiSep;
+    for(const id of ['feed-url-optical','feed-url-topo','feed-url-thermal','feed-url-donki']) document.getElementById(id).readOnly=true;
   }
   m.classList.toggle('open', open);
 };
 
-window.applyCustomNasaFeeds = () => {
-  NASA_RESOURCES.optical = document.getElementById('feed-url-optical').value.trim() || DEFAULT_NASA_RESOURCES.optical;
-  NASA_RESOURCES.topography = document.getElementById('feed-url-topo').value.trim() || DEFAULT_NASA_RESOURCES.topography;
-  NASA_RESOURCES.thermal = document.getElementById('feed-url-thermal').value.trim() || DEFAULT_NASA_RESOURCES.thermal;
-  NASA_RESOURCES.donkiSep = document.getElementById('feed-url-donki').value.trim() || DEFAULT_NASA_RESOURCES.donkiSep;
-  fetchLiveDonkiSpaceWeather();
-  reloadGlobeImagery();
-  window.toggleNasaFeedModal(false);
-  showToast("Hot-Swapped NASA WMTS & DONKI Resource Endpoints");
-};
-
-window.resetNasaFeeds = () => {
-  Object.assign(NASA_RESOURCES, DEFAULT_NASA_RESOURCES);
-  reloadGlobeImagery();
-  window.toggleNasaFeedModal(true);
-  fetchLiveDonkiSpaceWeather();
-  showToast("Reset to Official NASA Trek & DONKI Defaults");
-};
-
+window.applyCustomNasaFeeds = () => { fetchLiveDonkiSpaceWeather(); window.toggleNasaFeedModal(false); showToast('Refreshing official DONKI catalog; sources are locked'); };
+window.resetNasaFeeds = () => { window.toggleNasaFeedModal(true); fetchLiveDonkiSpaceWeather(); };
 // H. Minimalist Launch Choice -> Particle Globe Coalescing into Actual Martian Globe
 // Start in Particle Globe state (marsMat.opacity = 0, uIntroProgress = 0) before user clicks Start
 marsMat.opacity = 0.0;
@@ -3788,6 +3733,106 @@ window.dismissLaunchOverlay = (withAudio = false) => {
   triggerSparkleBurst(2.1);
 };
 
+
+// Additive adapters keep original scene, rig, route and shader APIs intact.
+function initializeExplorationTools() {
+  const source=document.getElementById('progressive-source');
+  progressiveGlobe=new MarsQuadtreeGlobe({parent:marsMesh,camera,renderer,radius:MARS_RADIUS,onStatus:info=>{
+    source.textContent=`NASA imagery · ${info.message}`;
+    if(upgrades)upgrades.tileStatus.textContent=`${info.message}\n${info.diagnostics}`;
+    source.dataset.zoomLevel=String(info.level);
+    source.dataset.sourceLayer=info.sourceLayer;
+    source.dataset.blending=String(info.blending);
+  }});
+  projectionView = createProjectionController({ camera, controls, globe: marsMesh, tiles: progressiveGlobe, isOrbital: () => state.mode === 'orbital', enterOrbital: () => { if (state.mode !== 'orbital') window.setMode('orbital'); }, pauseMotion: () => { state.autoSpin=false; state.isCameraTransitioning=false; document.getElementById('spin-btn').classList.remove('active'); } });
+  controls.addEventListener('change', () => {
+    if (state.mode !== 'orbital') return;
+    progressiveGlobe?.invalidate();
+    progressiveGlobe?.update(marsMat.opacity);
+  });
+  const cloneRoute=()=>({siteIndex:state.siteIndex,waypoints:structuredClone(state.waypoints),speed:state.astronautSpeed,progress:state.evaProgress,weather:state.weatherPreset});
+  const restoreRoute=saved=>{
+    state.survivalRouteActive=false;
+    if(!saved||saved.siteIndex!==state.siteIndex)return;
+    state.waypoints=structuredClone(saved.waypoints);state.astronautSpeed=saved.speed;state.evaProgress=saved.progress;
+    if(saved.weather)window.setWeatherPreset(saved.weather);
+    rebuildRouteGeometry();renderWaypointList();updateMissionMetrics();
+  };
+  const position=()=>astronautRig.root.position;
+  const nearestHabitat=()=>{
+    const candidates=(survivalSavedRoute?.waypoints||SITES[state.siteIndex].defaultWaypoints).filter(w=>w.type==='BASE'||/HAB|rover/i.test(w.name));
+    return candidates.sort((a,b)=>Math.hypot(a.x-position().x,a.z-position().z)-Math.hypot(b.x-position().x,b.z-position().z))[0]||SITES[state.siteIndex].defaultWaypoints[0];
+  };
+  const routeTo=(target,speed)=>{
+    const start=position();
+    state.waypoints=[{name:'Simulation start',type:'BASE',x:start.x,z:start.z},{name:target.name||'Synthetic target',type:'SCI',x:target.x,z:target.z}];
+    state.selectedWp=1;state.evaProgress=0;state.astronautSpeed=speed;state.survivalRouteActive=true;
+    rebuildRouteGeometry();renderWaypointList();updateMissionMetrics();
+  };
+  const simulationPath=(start,end)=>Array.from({length:33},(_,i)=>{
+    const t=i/32,x=start.x+(end.x-start.x)*t,z=start.z+(end.z-start.z)*t;
+    return {x:x*24,z:z*24,y:getSiteHeight(state.siteIndex,x,z)*18};
+  });
+  const api={
+    globe:marsMesh,radius:MARS_RADIUS,globePoint:spherePoint,canvas:renderer.domElement,controls,tiles:progressiveGlobe,
+    getState:()=>state,getSite:()=>SITES[state.siteIndex],
+    cancelWaypoint:()=>{if(state.addWpMode)window.toggleAddWaypoint();},
+    download:(name,text)=>{const url=URL.createObjectURL(new Blob([text],{type:'application/geo+json'}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);},
+    pick:event=>{
+      if(state.mode!=='orbital'){showToast('Coordinate capture uses the reference globe; surface terrain is synthetic.');return null;}
+      const rect=renderer.domElement.getBoundingClientRect();
+      const ndc=new THREE.Vector2((event.clientX-rect.left)/rect.width*2-1,-(event.clientY-rect.top)/rect.height*2+1);
+      const ray=new THREE.Raycaster();ray.setFromCamera(ndc,camera);
+      const hit=ray.intersectObject(marsMesh,false)[0];if(!hit)return null;
+      const p=marsMesh.worldToLocal(hit.point.clone()).normalize();
+      return {lat:THREE.MathUtils.radToDeg(Math.asin(p.y)),lon:((THREE.MathUtils.radToDeg(Math.atan2(p.z,-p.x))-180+540)%360)-180};
+    },
+    getView:()=>({site:state.siteIndex,mode:state.mode,layer:progressiveGlobe.layer,camera:camera.position.toArray(),target:controls.target.toArray(),globeRotation:marsMesh.rotation.toArray().slice(0,3),autoSpin:state.autoSpin}),
+    restoreView:view=>{
+      if(!view||typeof view!=='object')return;
+      if(Number.isInteger(view.site)&&view.site>=0&&view.site<SITES.length)window.selectSite(String(view.site));
+      if(['orbital','hybrid','particles'].includes(view.mode))window.setMode(view.mode);
+      if(['optical','ctx','topography','thermal'].includes(view.layer))progressiveGlobe.setLayer(view.layer);
+      if(Array.isArray(view.globeRotation)&&view.globeRotation.length===3&&view.globeRotation.every(Number.isFinite))marsMesh.rotation.set(...view.globeRotation);
+      if(typeof view.autoSpin==='boolean')state.autoSpin=view.autoSpin;
+      const valid=a=>Array.isArray(a)&&a.length===3&&a.every(v=>Number.isFinite(v)&&Math.abs(v)<1000);
+      if(valid(view.camera)&&valid(view.target)){camera.position.fromArray(view.camera);controls.target.fromArray(view.target);state.isCameraTransitioning=false;}
+    },
+    survival:{
+      isOrbital:()=>state.mode==='orbital',
+      saveRoute:()=>{survivalSavedRoute=cloneRoute();return survivalSavedRoute;},restoreRoute,
+      sample:()=>{const p=position(),slope=getSiteSlopeDeg(state.siteIndex,p.x,p.z);return {position:{x:p.x*24,y:p.y*18,z:p.z*24},o2:state.o2ReservePct,heartRate:Math.min(180,72+state.astronautSpeed*18+slope*.4),coreTemp:36.8+state.astronautSpeed*.15,slope,radiation:SITES[state.siteIndex].nominalRad};},
+      pathToHabitat:()=>simulationPath(position(),nearestHabitat()),
+      act:(action,{hazard})=>{
+        window.setWeatherPreset({nominal:'clear',sep:'storm',dust:'haze',vortex:'vortex'}[hazard]);
+        if(action==='CONTINUE_EVA'){restoreRoute(survivalSavedRoute);return;}
+        const start=position();
+        if(action==='SPRINT_NEAREST_HABITAT'){const habitat=nearestHabitat();routeTo({...habitat,name:'Demo HAB-01 (synthetic)'},1.8);return;}
+        // Search nearby procedural terrain. This is not a validated shelter or MOLA analysis.
+        let best=null,bestScore=Infinity;
+        for(let x=-12;x<=12;x+=3)for(let z=-12;z<=12;z+=3){
+          const px=THREE.MathUtils.clamp(start.x+x,-48,48),pz=THREE.MathUtils.clamp(start.z+z,-48,48);
+          const slope=getSiteSlopeDeg(state.siteIndex,px,pz);if(slope>12)continue;
+          const h=getSiteHeight(state.siteIndex,px,pz);
+          const ridge=getSiteHeight(state.siteIndex,Math.max(-50,px-6),pz)-h;
+          const score=Math.hypot(x,z)+slope*.7-(action==='SHELTER_BEHIND_RIDGE'?Math.max(0,ridge)*4:0);
+          if(score<bestScore){bestScore=score;best={x:px,z:pz,name:action==='LOW_SLOPE_HOLD'?'Low-slope hold (demo)':'Downwind ridge candidate (demo, fixed westerly wind)'};}
+        }
+        if(best)routeTo(best,action==='LOW_SLOPE_HOLD'?.4:1.0);else{state.astronautSpeed=0;showToast('No gentle terrain candidate found; simulation holding position.');}
+      }
+    }
+  };
+  upgrades=createWorkbench(api);
+  vehicles=createVehicles({parent:surfaceGroup,getSite:()=>SITES[state.siteIndex],getHeight:getSiteHeight,getMode:()=>state.mode,host:upgrades.host,enterSurface:()=>{if(state.mode==='orbital')window.setMode('hybrid');},focus:(point,offset)=>{surfaceParticles.visible=false;routeGroup.visible=false;placeDemoGroup.visible=false;scrubRing.visible=false;dropPreviewGroup.visible=false;astronautRig.root.visible=false;controls.minDistance=.12;state.autoSpin=false;state.suitDemoActive=false;state.povMode='free';controls.enabled=true;state.isCameraTransitioning=false;controls.target.copy(point);camera.position.copy(point).add(offset);camera.lookAt(point);controls.update();}});
+
+  mobileAR=createMobileAR({renderer,buttonHost:upgrades.arHost,onStatus:message=>{upgrades.arStatus.textContent=message;},onActive:active=>{
+    controls.enabled=!active&&state.povMode==='free'&&!upgrades.measurements.enabled;
+  },makeModel:()=>{
+    const model=state.mode==='orbital'?marsMesh.clone(true):surfaceGroup.clone(true);
+    model.visible=true;model.position.set(0,0,0);return model;
+  }});
+}
+
 // Connect controls after all window actions have been registered.
 bindControls();
 
@@ -3802,4 +3847,7 @@ updateWeatherUI();
 document.getElementById('science-brief').innerHTML = SITES[0].brief;
 renderCrismSpectralPlot(0);
 fetchLiveDonkiSpaceWeather();
-animate();
+initializeExplorationTools();
+renderer.setAnimationLoop(animate);
+
+installProvenance(() => SITES[state.siteIndex], () => donkiLiveInfo);

@@ -1,0 +1,32 @@
+import { MARS, geodesicDistance, chordDistance, polygonArea, planetographicLatitude, interpolate, terrainDistance, toMarsGeoJSON, validatePoint } from '../js/geodesy.js';
+import { decideSurvival, neuralRisk, traversalEnergy } from '../js/neural-survival.js';
+export async function runTests(){
+  const results=[];
+  const test=async(name,fn)=>{try{await fn();results.push({name,passed:true});}catch(e){results.push({name,passed:false,error:e.message});}};
+  const assert=(condition,message='Assertion failed')=>{if(!condition)throw new Error(message);};
+  const close=(a,b,relative=1e-9)=>assert(Math.abs(a-b)<=Math.max(1e-7,Math.abs(b)*relative),`${a} != ${b}`);
+  const p=(lat,lon)=>({lat,lon});
+  await test('Coincident point distance',()=>close(geodesicDistance(p(10,20),p(10,20)),0));
+  await test('Quarter equator: independent circumference formula',()=>close(geodesicDistance(p(0,0),p(0,90)),Math.PI*MARS.radius/2));
+  await test('Dateline crossing chooses short arc',()=>close(geodesicDistance(p(0,179),p(0,-179)),2*Math.PI*MARS.radius/180));
+  await test('Antipodal distance remains finite',()=>close(geodesicDistance(p(0,0),p(0,180)),Math.PI*MARS.radius));
+  await test('Quarter-circle chord: independent Pythagorean formula',()=>close(chordDistance(p(0,0),p(0,90)),Math.sqrt(2)*MARS.radius));
+  await test('Polar octant area: one eighth of sphere',()=>close(polygonArea([p(0,0),p(0,90),p(90,0)]),Math.PI*MARS.radius**2/2));
+  await test('Polygon winding does not change area',()=>{const v=[p(10,170),p(10,-170),p(20,-170),p(20,170)];close(polygonArea(v),polygonArea([...v].reverse()),1e-7);});
+  await test('Graphic latitude greater than centric in north',()=>assert(planetographicLatitude(45)>45&&planetographicLatitude(90)===90));
+  await test('Geodesic midpoint handles longitude seam',()=>close(Math.abs(interpolate(p(0,179),p(0,-179),.5).lon),180));
+  await test('Flat measured terrain distance matches sphere arc',async()=>close(await terrainDistance([p(0,0),p(0,1)],()=>0),geodesicDistance(p(0,0),p(0,1)),1e-8));
+  await test('Missing measured DEM returns unavailable',async()=>assert(await terrainDistance([p(0,0),p(0,1)],()=>null)===null));
+  await test('Invalid latitude is rejected',()=>{let rejected=false;try{validatePoint(p(91,0));}catch{rejected=true;}assert(rejected);});
+  await test('Planetary GeoJSON closes polygons and discloses model',()=>{const x=toMarsGeoJSON([p(0,0),p(0,1),p(1,0)],true);assert(x.features[0].geometry.coordinates[0].length===4&&x.marsReference.radius===3389500);});
+  await test('Energy is additive and reported in kJ',()=>close(traversalEnergy([{x:0,y:0,z:0},{x:100,y:0,z:0}]),35));
+  const base={o2:86,heartRate:90,coreTemp:37,slope:4,radiation:.6,hazard:'nominal',energyKJ:20,predictedDose:.1,pressure:4.3,gravity:.38};
+  await test('Nominal scenario continues EVA',()=>assert(decideSurvival(base).action==='CONTINUE_EVA'));
+  await test('Low energy storm sprints to demo habitat',()=>assert(decideSurvival({...base,hazard:'dust'}).action==='SPRINT_NEAREST_HABITAT'));
+  await test('50 kJ boundary selects ridge scenario',()=>assert(decideSurvival({...base,hazard:'dust',energyKJ:50}).action==='SHELTER_BEHIND_RIDGE'));
+  await test('High dose blocks sprint scenario',()=>assert(decideSurvival({...base,hazard:'sep',predictedDose:2}).action==='SHELTER_BEHIND_RIDGE'));
+  await test('Tight oxygen margin blocks sprint',()=>assert(decideSurvival({...base,hazard:'dust',o2:20}).action==='SHELTER_BEHIND_RIDGE'));
+  await test('Steep scarp takes priority',()=>assert(decideSurvival({...base,hazard:'dust',slope:21}).action==='LOW_SLOPE_HOLD'));
+  await test('Forward pass has bounded, increasing stress response',()=>{const low=neuralRisk(base),high=neuralRisk({...base,o2:10,slope:40,radiation:5,hazard:'sep',heartRate:170,coreTemp:39});assert(low>=0&&high<=100&&high>low);});
+  return results;
+}

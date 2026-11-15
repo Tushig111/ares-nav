@@ -1,0 +1,21 @@
+{
+  "baseline": {
+    "cpuMedianMs": 2.2999999970197678,
+    "cpuP95Ms": 4.799999997019768,
+    "frameIntervalP95Ms": 44.20000000298023,
+    "nodes": 236,
+    "textures": 220,
+    "drawCalls": 20,
+    "triangles": 50720
+  },
+  "optimized": {
+    "cpuMedianMs": 2.0999999940395355,
+    "cpuP95Ms": 4.199999995529652,
+    "frameIntervalP95Ms": 42.600000001490116,
+    "nodes": 236,
+    "textures": 220,
+    "drawCalls": 17,
+    "triangles": 43808
+  },
+  "warning": "Single synthetic run; no universal frame-rate guarantee."
+}

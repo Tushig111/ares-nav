@@ -1,0 +1,71 @@
+{
+  "environment": "Three.js 0.160.0 math/geometry in VM; mocked successful image loads; no GPU",
+  "status": {
+    "layer": "optical",
+    "level": 7,
+    "textures": 128,
+    "active": 0,
+    "leaves": 16,
+    "message": "Viking optical mosaic · L7 · 16 patches · 128/128 textures · 0/6 requests"
+  },
+  "pins": 24,
+  "queue": 0,
+  "maxTextures": 128,
+  "maxRequests": 6,
+  "trace": [
+    {
+      "layer": "optical",
+      "level": 1,
+      "textures": 0,
+      "active": 6,
+      "leaves": 0,
+      "message": "Viking optical mosaic · L1 · 0 patches · 0/128 textures · 6/6 requests",
+      "pins": 8
+    },
+    {
+      "layer": "optical",
+      "level": 7,
+      "textures": 128,
+      "active": 0,
+      "leaves": 16,
+      "message": "Viking optical mosaic · L7 · 16 patches · 128/128 textures · 0/6 requests",
+      "pins": 24
+    },
+    {
+      "layer": "optical",
+      "level": 7,
+      "textures": 128,
+      "active": 0,
+      "leaves": 16,
+      "message": "Viking optical mosaic · L7 · 16 patches · 128/128 textures · 0/6 requests",
+      "pins": 24
+    },
+    {
+      "layer": "optical",
+      "level": 7,
+      "textures": 128,
+      "active": 0,
+      "leaves": 16,
+      "message": "Viking optical mosaic · L7 · 16 patches · 128/128 textures · 0/6 requests",
+      "pins": 24
+    },
+    {
+      "layer": "optical",
+      "level": 7,
+      "textures": 128,
+      "active": 0,
+      "leaves": 16,
+      "message": "Viking optical mosaic · L7 · 16 patches · 128/128 textures · 0/6 requests",
+      "pins": 24
+    },
+    {
+      "layer": "optical",
+      "level": 7,
+      "textures": 128,
+      "active": 0,
+      "leaves": 16,
+      "message": "Viking optical mosaic · L7 · 16 patches · 128/128 textures · 0/6 requests",
+      "pins": 24
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+[
+  {
+    "file": "models/curiosity.glb",
+    "bytes": 9175916,
+    "sha256": "c49e3b6c08f6902224e952f8aa27e2d7c0d93db0024d4b167b911161bb647bd2",
+    "provenance": "User-supplied NASA-attributed asset; original NASA binary identity not independently established"
+  },
+  {
+    "file": "models/curiosity-dirty.glb",
+    "bytes": 5018308,
+    "sha256": "92d43cc9e7a0cd74b33358a29f4fd8840ec75edd9e191bbcd3bb7fd859b9acaa",
+    "provenance": "User-supplied NASA-attributed asset; original NASA binary identity not independently established"
+  },
+  {
+    "file": "models/perseverance.glb",
+    "bytes": 4987176,
+    "sha256": "10db7c03a5e63a5a3b3e7baa6243aa4918ba045fa8ff0a731d0217491adc727f",
+    "provenance": "User-supplied NASA-attributed asset; original NASA binary identity not independently established"
+  }
+]

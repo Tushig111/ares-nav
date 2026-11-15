@@ -1,59 +1,67 @@
-# How ARES NAV works
+# How the upgrade works
 
-## A short answer you can say
+## A presentation answer
 
-> ARES NAV is a browser-based Mars exploration demo. HTML defines the panels and controls, CSS handles the appearance and responsive layout, and JavaScript connects the interface to a Three.js 3D scene. I use procedural terrain to represent four Mars-inspired locations, GLSL shaders for particle effects, and an A* search that penalizes steep terrain when planning a route. NASA image and data endpoints add context, but the terrain and safety numbers are demonstrations rather than validated mission data. The project started from an existing single-file prototype, which I refactored with AI assistance into separate, readable files.
+> ARES NAV is a static browser application built with HTML, CSS, JavaScript, Three.js and GLSL. I started with an existing Mars explorer and upgraded it with AI assistance. A camera-driven quadtree loads NASA imagery at increasing detail as the user zooms. A separate geodesy module calculates Mars distances and areas. The original astronaut, particles, sounds and route tools remain, with an optional synthetic survival demonstration and capability-detected mobile AR. NASA imagery is observational, while the surface terrain and physiology are explicitly simulated.
 
-Adapt that wording to the work you actually did and understand. Cleaner code does not establish that a project was written without AI; describe assistance honestly when asked.
+## Architecture
 
-## What each language does
+`app.js` remains the owner of the original scene and state. Adapters expose its globe, camera, original route reconstruction, astronaut and weather controls to the additive modules. The render loop uses `renderer.setAnimationLoop`, allowing WebXR to supply frames. Normal mode renders the original scene; AR mode renders a separate tabletop scene without permanently moving the original world.
 
-**HTML** is the structure: buttons, site selector, drawers, sliders, and canvases. The browser also reads an import map that points to a specific version of Three.js.
+The globe is a smooth sphere. Each tile patch has a known equirectangular longitude/latitude extent. A small shared-border skirt covers tessellation gaps. Screen size determines whether to request four children. Parent geometry remains visible until every child has source imagery. Replacing it is atomic within the frame's visible-node selection. At the memory budget, the tree pauses refinement; it does not discard a required parent just to claim a higher zoom level.
 
-**CSS** controls the dark interface, colors, glass panels, focus rings, mobile breakpoints, and transitions. One-off static styles were moved out of the markup. JavaScript still changes styles for live values and animation.
+The cache has at most 220 source textures. Visible samples, inherited images and requested sibling groups are protected while needed. Other textures are evicted in least-recently-used order with `.dispose()`. Source image requests are bounded at 12; results from stale views are ignored and failures are retried after backoff. Geometry has its own pruning threshold.
 
-**JavaScript** manages user actions, state, models, routes, and the render loop. `app.js` creates the renderer, scene, camera, lights, terrain, astronaut, and overlays. `controls.js` connects named HTML actions to the existing application functions. `data.js`, `noise.js`, and `audio.js` hold independent concerns.
+The local source viewer is intentionally separate from the synthetic surface mesh. It centers the actual selected site in its correct source tile and displays source-level pixel scale. The old habit of blending a low-resolution orbital tile into invented terrain was removed. This avoids claiming that the model's landmarks were measured by that image.
 
-**GLSL** runs on the graphics processor. Vertex shaders position particles and terrain vertices; fragment shaders calculate the appearance of the pixels or points. The shaders use uniforms, such as time and transition progress, to animate without rebuilding every particle on the CPU each frame.
+## Geodesy
 
-## How the 3D world is made
+Distances use the haversine central angle multiplied by the Mars mean radius. A 3D chord is `2R sin(angle/2)`, summed per segment for polylines. Polygon area is a signed fan of spherical triangles evaluated using L'Huilier's excess formula. Numeric and globe-click inputs use planetocentric latitude and east longitude. Graphic latitude is derived from the requested ellipsoid axes.
 
-Three.js draws meshes and point clouds using WebGL. The opening globe uses a smooth reference sphere with NASA Mars Trek Viking global mosaic tiles. It contains no procedural relief, generated normal map, or invented close-up surface detail. NASA imagery is drawn at full opacity. A complete 512 × 256 base map loads first, followed by a complete 2048 × 1024 level; failures are labeled, and no synthetic map is substituted. The sphere is a simplified shape, not a measured elevation model. Surface sites use mathematical height functions, layered deterministic noise, and site-specific shapes. Heights and colors are precomputed for transitions. These are reconstructed artistic surfaces, not downloaded full-resolution survey DEMs.
+Markers and line arcs are attached to the same rotating globe frame as the imagery. Click points are transformed from world coordinates into that frame. Share state includes vertices, drawing mode, site, camera, target, selected globe layer, globe rotation and auto-spin. Restored input is bounded and validated.
 
-The standing-wave particle effects are inspired by Chladni patterns: sine waves form nodal lines, and shader calculations move and illuminate particles around those patterns. This is a visual technique, not a scientific acoustic experiment on Mars.
+Measured terrain-following distances are not claimed: no numeric DEM is included. A separate sampling function returns unavailable if any elevation sample is missing. The synthetic route and profile tools remain available under their original behavior.
 
-The astronaut is assembled from geometry, with grouped limbs that rotate during a walk cycle. Camera smoothing supports a free view, shoulder view, and visor view. `requestAnimationFrame` updates the scene; actual frame rate depends on the device.
+## Synthetic risk and routing
 
-## How route planning works
+The network contains eight normalized inputs, four tanh hidden neurons and a sigmoid output. All weights are explicit and hand-authored. There was no training dataset, calibration, clinical validation or mission validation. The percentage is therefore a scenario score, not a probability of death or system failure.
 
-The optimizer samples a grid across the current procedural terrain. A* considers neighboring grid cells, tracks the accumulated movement cost, and adds a slope penalty. A distance-to-goal heuristic helps choose which candidate to explore next. The resulting points are used to rebuild the displayed route and astronaut path.
+A deterministic policy chooses the four requested actions from slope, scenario hazard, energy, oxygen and a synthetic dose boundary. A route adapter uses the original waypoint geometry and astronaut walker to visualize the choice. Routes stop at the temporary destination rather than looping back into the hazard. Disabling the scenario restores the saved EVA route and speed. Nearby terrain candidates are procedural and use a disclosed fixed wind convention; a ridge is not claimed to be adequate radiation shielding.
 
-The result is a route favored by this simplified cost function. It does not prove that the route is safe, globally optimal over real terrain, or feasible for a real astronaut. Smoothing and coarse grid sampling also affect the final displayed path.
+## Mobile and AR
 
-## How NASA resources are used
+WebXR is selected only after the browser confirms an `immersive-ar` session. The hit-test source finds a physical surface. A reticle guides placement of the roughly 0.8 m model. A clone of the existing globe or selected surface preserves the original scene.
 
-The prototype contains NASA Trek tile URL templates, NASA/JPL photograph references, and a request to the DONKI solar energetic particle endpoint. Images supplement the procedural scene when available. Site weather, mineral plots, radiation, and oxygen values remain demo inputs or calculations.
+The camera fallback is a camera image behind a transparent WebGL scene. Device orientation adjusts the camera relative to the initial pose; drag rotates the model and pinch changes its size. It is camera-backed 3D, not real surface-anchored AR. Permissions are requested on explicit entry and tracks stop on exit. The application does not upload camera frames.
 
-A successful feed request records event count and the latest returned event time. An empty array means the service returned no events for that request, not that Mars is safe. A failed request now displays “Unavailable,” with no invented cached event or timestamp. Photo captions and scientific claims inherited from the original need source-by-source review before presenting them as established findings.
+## What the upgrade does not claim
 
-## Why separate the files?
+- Full Mars Trek feature parity or its maximum practical zoom.
+- Numeric MOLA elevation from colored hillshade.
+- Validated site geology, current Mars weather or verified inherited photo captions.
+- A trained neural model, operational safe routes or useful SEP protection from a ridge.
+- Ellipsoidal distances: the displayed distance model is the requested mean sphere.
+- Real measured terrain-following distance without a numeric DEM.
+- Universal headset/browser support, guaranteed seamless rendering on every GPU, or 60 FPS.
 
-A single file mixed presentation, data, sound, physics-like effects, and interaction. Separating concerns makes it easier to find a bug and understand what a change affects. For example, changing panel colors belongs in CSS, editing a site preset belongs in `data.js`, and adjusting particle motion belongs in a shader. The scene state stays together for now because splitting it further requires a larger architectural change.
+## Useful follow-up answers
 
-## Useful answers to follow-up questions
+**Why use tiles?** A whole high-resolution planet is too large to download and keep on the GPU at once. Tiles let the camera select the currently useful detail.
 
-**Why Three.js?** It provides scene objects, cameras, geometry, materials, raycasting, and controls over WebGL, reducing the amount of graphics boilerplate.
+**Why keep parent imagery?** Downloading finer tiles takes time. Keeping the parent gives the viewer continuous coverage while children load.
 
-**Did you train an AI model?** No. This project uses browser graphics, mathematical terrain functions, shader animation, and a search algorithm. AI assistance was used in refactoring this version.
+**Is the survival model trained AI?** No. It demonstrates a neural forward pass with hand-authored weights and explicit scenario rules.
 
-**Is everything live NASA data?** No. Some external images and a space-weather request are used, while most surface and mission values are simulated.
+**Is all the data from NASA?** The optical and shaded-relief maps are source imagery. Measurements are derived. Surface terrain, telemetry, spectral curves and survival decisions are demonstrations.
 
-**How is sound created?** The Web Audio API connects oscillators, filters, gain envelopes, and a generated reverb buffer. Audio is optional.
+**How can it be shared?** It is static and can be hosted from the root of the existing GitHub Pages repository. No npm install or build server is needed.
 
-**How can someone open it?** Serve the static files locally or publish them on GitHub Pages. Visitors can use the demo without installing the source dependencies.
+**What needs hardware testing?** Camera permissions, gyroscope behavior, real-world AR hit testing, placement, mobile GPU performance, and headset-specific input.
 
-**What would you improve next?** Verify each dataset and caption, clearly label individual simulated layers, replace procedural terrain with validated elevation inputs, separate the scene controller into smaller systems, and test route behavior across more cases and devices.
+## Smooth zoom update
 
-## Opening globe data
+Viking color remains the automatic source through L6. L7+ requests CTX, with a 220 ms blend after every sibling image has been uploaded to WebGL. New patches inherit their parent image through UV sub-rectangles. The blend shader handles CTX transparency without erasing the Viking underlay. Parents stay visible through the handoff; CTX underlays also remain to fill transparent coverage gaps.
 
-The globe now uses the NASA Mars Trek **Viking VIS, Global Color Mosaic** layer (`Mars_Viking_MDIM21_ClrMosaic_global_232m`) directly, without generated color blending or synthetic globe relief. The displayed texture is a 2048 × 1024 overview, not the full native-resolution dataset. Source: [NASA Mars Trek API](https://trek.nasa.gov/tiles/apidoc/trekAPI.html?body=mars). The imagery status distinguishes loading, base-map fallback, full overview, and failure. The live globe remains a simplified sphere; surface exploration sites are still procedural demos.
+The queue allows 12 requests and the LRU holds up to 220 source textures. Capacity is reserved for complete sibling groups rather than arbitrarily limiting refinement to two groups. LOD selection runs on a 45 ms interval and immediately after controls change; per-frame blending remains smooth between LOD decisions.
+
+The camera can approach radius 4.64 with a 0.01 near plane. Navigation slows in proportion to altitude. The HUD separates the dataset's native resolution from the coarser pixel scale of its current tile.

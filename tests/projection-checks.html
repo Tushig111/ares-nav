@@ -1,0 +1,21 @@
+<!doctype html><meta charset="utf-8"><title>ARES projection checks</title>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
+<h1>Projection geometry checks</h1><pre id="result">Running…</pre>
+<script type="module">
+import * as THREE from 'three';import {OrbitControls} from 'three/addons/controls/OrbitControls.js';import {createProjectionController} from '../js/projections.js';
+const canvas=document.createElement('canvas');document.body.append(canvas);const camera=new THREE.PerspectiveCamera(42,1.5,.01,1600);camera.position.set(0,3,13);const controls=new OrbitControls(camera,canvas);controls.enableDamping=false;
+const globe=new THREE.Group();globe.rotation.z=.4396;const cache=new Map([['same-texture',{id:1}]]),tiles={cache,invalidate(){}};let count=0;const results=[];const p=createProjectionController({camera,controls,globe,tiles,enterOrbital(){},pauseMotion(){count++;}});
+const check=(name,fn)=>{try{if(!fn())throw Error('Assertion failed');results.push({name,passed:true});}catch(e){results.push({name,passed:false,error:e.message});}};
+const initial=camera.position.clone();p.setMode('north');camera.updateMatrixWorld();
+check('North uses true orthographic projection',()=>camera.isOrthographicCamera&&camera.projectionMatrix.elements[15]===1&&camera.projectionMatrix.elements[11]===0);
+check('North camera follows tilted globe axis',()=>camera.position.clone().normalize().dot(new THREE.Vector3(0,1,0).transformDirection(globe.matrixWorld))>.99999);
+check('Polar view disables rotation, enables screen pan',()=>!controls.enableRotate&&controls.enablePan&&controls.screenSpacePanning);
+check('Center picking ray intersects north hemisphere',()=>{const ray=new THREE.Raycaster();ray.setFromCamera(new THREE.Vector2(),camera);const hit=ray.ray.intersectSphere(new THREE.Sphere(new THREE.Vector3(),4.6),new THREE.Vector3());return hit&&hit.applyMatrix4(globe.matrixWorld.clone().invert()).y>4.59;});
+camera.zoom=16;camera.updateProjectionMatrix();check('Orthographic zoom changes projection scale',()=>Math.abs(camera.projectionMatrix.elements[5]-16/5.2)<1e-8);
+p.setMode('south');camera.updateMatrixWorld();check('South faces opposite globe axis',()=>camera.position.clone().normalize().dot(new THREE.Vector3(0,-1,0).transformDirection(globe.matrixWorld))>.99999);
+check('Projection changes reuse exact cache and globe',()=>tiles.cache===cache&&cache.get('same-texture').id===1);
+camera.aspect=.6;camera.updateProjectionMatrix();check('Polar resize maintains aspect ratio',()=>Math.abs((camera.right-camera.left)/(camera.top-camera.bottom)-.6)<1e-9);
+p.setMode('global');check('Global restores perspective camera and position',()=>camera.isPerspectiveCamera&&!camera.isOrthographicCamera&&camera.position.distanceTo(initial)<1e-6&&controls.enableRotate&&!controls.enablePan);
+check('Invalid mode is rejected',()=>p.setMode('bogus')===false);
+document.querySelector('#result').textContent=JSON.stringify({passed:results.filter(x=>x.passed).length,total:results.length,results},null,2);
+</script>

@@ -1,0 +1,17 @@
+{
+  "htmlIdsPreserved": 130,
+  "windowActionsPreserved": 33,
+  "unchangedGLSL": 6,
+  "logicUnchangedExceptImportVersion": [
+    "geodesy.js",
+    "measurement-tools.js",
+    "neural-survival.js",
+    "ar-mobile.js",
+    "audio.js",
+    "controls.js",
+    "data.js",
+    "noise.js",
+    "shaders.js"
+  ],
+  "localImportsResolve": true
+}

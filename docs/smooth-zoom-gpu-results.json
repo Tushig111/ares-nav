@@ -1,0 +1,10 @@
+{
+  "environment": "Actual browser WebGL framebuffer readback",
+  "passed": 3,
+  "total": 3,
+  "checks": [
+    "transparent CTX child retains Viking underlay",
+    "opaque detail has an intermediate blend",
+    "transparent CTX parent retains ancestor color"
+  ]
+}

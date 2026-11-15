@@ -1,0 +1,11 @@
+{
+  "vehicleTests": "8/8 passed",
+  "mainApp": [
+    "Curiosity loaded",
+    "Inspect rover visibly renders actual GLB",
+    "MAV ignition updates flight readout and plume"
+  ],
+  "consoleErrorsObserved": 0,
+  "physicalAR": "Not verified on a physical Android/iOS device",
+  "decoder": "Locally bundled pinned Three.js 0.160.0 Draco decoder"
+}

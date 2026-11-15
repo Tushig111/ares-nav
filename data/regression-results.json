@@ -1,0 +1,170 @@
+[
+  {
+    "name": "Coincident point distance",
+    "passed": true
+  },
+  {
+    "name": "Quarter equator: independent circumference formula",
+    "passed": true
+  },
+  {
+    "name": "Dateline crossing chooses short arc",
+    "passed": true
+  },
+  {
+    "name": "Antipodal distance remains finite",
+    "passed": true
+  },
+  {
+    "name": "Quarter-circle chord: independent Pythagorean formula",
+    "passed": true
+  },
+  {
+    "name": "Polar octant area: one eighth of sphere",
+    "passed": true
+  },
+  {
+    "name": "Polygon winding does not change area",
+    "passed": true
+  },
+  {
+    "name": "Graphic latitude greater than centric in north",
+    "passed": true
+  },
+  {
+    "name": "Geodesic midpoint handles longitude seam",
+    "passed": true
+  },
+  {
+    "name": "Flat measured terrain distance matches sphere arc",
+    "passed": true
+  },
+  {
+    "name": "Missing measured DEM returns unavailable",
+    "passed": true
+  },
+  {
+    "name": "Invalid latitude is rejected",
+    "passed": true
+  },
+  {
+    "name": "Planetary GeoJSON closes polygons and discloses model",
+    "passed": true
+  },
+  {
+    "name": "Energy is additive and reported in kJ",
+    "passed": true
+  },
+  {
+    "name": "Nominal scenario continues EVA",
+    "passed": true
+  },
+  {
+    "name": "Low energy storm sprints to demo habitat",
+    "passed": true
+  },
+  {
+    "name": "50 kJ boundary selects ridge scenario",
+    "passed": true
+  },
+  {
+    "name": "High dose blocks sprint scenario",
+    "passed": true
+  },
+  {
+    "name": "Tight oxygen margin blocks sprint",
+    "passed": true
+  },
+  {
+    "name": "Steep scarp takes priority",
+    "passed": true
+  },
+  {
+    "name": "Forward pass has bounded, increasing stress response",
+    "passed": true
+  },
+  {
+    "name": "LRU eviction disposes oldest unpinned texture",
+    "passed": true
+  },
+  {
+    "name": "Pinned frontier is retained instead of forced eviction",
+    "passed": true
+  },
+  {
+    "name": "Refined descendants retain coverage after intermediate eviction",
+    "passed": true
+  },
+  {
+    "name": "Unavailable thermal selection preserves current layer",
+    "passed": true
+  },
+  {
+    "name": "Hidden surface-mode ancestor pauses globe requests and uploads",
+    "passed": true
+  },
+  {
+    "name": "Automatic source stays color through L6 and changes only at L7",
+    "passed": true
+  },
+  {
+    "name": "Children immediately inherit correct north/south UV sub-rectangles",
+    "passed": true
+  },
+  {
+    "name": "Image decode alone does not mark a child WebGL-ready",
+    "passed": true
+  },
+  {
+    "name": "Parent remains visible until all four siblings upload and fade for 220ms",
+    "passed": true
+  },
+  {
+    "name": "CTX families retain their underlay after the blend for transparent no-data coverage",
+    "passed": true
+  },
+  {
+    "name": "One missing sibling preserves complete parent color coverage",
+    "passed": true
+  },
+  {
+    "name": "Rapid zoom reversal retains coverage during merge",
+    "passed": true
+  },
+  {
+    "name": "Request scheduler admits twelve requests, with no two-split gate",
+    "passed": true
+  },
+  {
+    "name": "Study-site slot shares the twelve-request ceiling",
+    "passed": true
+  },
+  {
+    "name": "Texture admission never exceeds 220 including in-flight loads",
+    "passed": true
+  },
+  {
+    "name": "LRU eviction protects visible and transitioning imagery",
+    "passed": true
+  },
+  {
+    "name": "Empty valid catalog means zero returned events",
+    "passed": true
+  },
+  {
+    "name": "Rate limiting means unknown count, never zero",
+    "passed": true
+  },
+  {
+    "name": "Malformed API payload is handled",
+    "passed": true
+  },
+  {
+    "name": "Latest event is determined chronologically",
+    "passed": true
+  },
+  {
+    "name": "Network failure is caught",
+    "passed": true
+  }
+]

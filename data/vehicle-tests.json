@@ -1,0 +1,38 @@
+{
+  "passed": 8,
+  "total": 8,
+  "results": [
+    {
+      "name": "curiosity decodes and is 2.2m high",
+      "passed": true
+    },
+    {
+      "name": "curiosity-dirty decodes and is 2.2m high",
+      "passed": true
+    },
+    {
+      "name": "perseverance decodes and is 2.2m high",
+      "passed": true
+    },
+    {
+      "name": "Powered acceleration subtracts Mars gravity",
+      "passed": true
+    },
+    {
+      "name": "One second powered altitude is 2.64m",
+      "passed": true
+    },
+    {
+      "name": "Burnout velocity is continuous",
+      "passed": true
+    },
+    {
+      "name": "Ballistic coast accelerates down at 3.72m/s²",
+      "passed": true
+    },
+    {
+      "name": "Ground collision clamps altitude",
+      "passed": true
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+<!doctype html><meta charset="utf-8"><title>ARES GPU tile blend checks</title><script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script><style>body{background:#080c15;color:#e5edf5;font:14px/1.6 monospace;padding:24px}.pass{color:#65efbb}.fail{color:#ff8a8a}</style><h1>GPU tile blend checks</h1><p id="summary">Running actual WebGL pixel checks…</p><ol id="results"></ol><script type="module">
+import * as THREE from 'three';
+import {MarsQuadtreeGlobe} from '../js/mars-quadtree-globe.js';
+const results=[];let renderer,q,target,textures=[];
+const assert=(condition,message)=>{if(!condition)throw new Error(message);};
+const test=(name,fn)=>{try{fn();results.push({name,passed:true});}catch(e){results.push({name,passed:false,error:e.message});}};
+try{
+ renderer=new THREE.WebGLRenderer({antialias:false});renderer.setSize(8,8);renderer.outputColorSpace=THREE.LinearSRGBColorSpace;
+ const scene=new THREE.Scene();scene.background=new THREE.Color(0);const camera=new THREE.OrthographicCamera(-1,1,1,-1,.01,10);camera.position.z=2;
+ const texture=(r,g,b,a)=>{const t=new THREE.DataTexture(new Uint8Array([r,g,b,a]),1,1);t.colorSpace=THREE.SRGBColorSpace;t.needsUpdate=true;textures.push(t);return t;};
+ const red=texture(255,0,0,255),gray=texture(128,128,128,255),empty=texture(0,0,0,0);
+ const base=new THREE.Mesh(new THREE.PlaneGeometry(2,2),new THREE.MeshBasicMaterial({map:red,toneMapped:false}));scene.add(base);
+ const parentGroup=new THREE.Group();scene.add(parentGroup);q=new MarsQuadtreeGlobe({parent:parentGroup,camera,renderer});
+ const node=q.node(7,0,0);q.ensureMesh(node);node.mesh.geometry.dispose();node.mesh.geometry=new THREE.PlaneGeometry(2,2);node.mesh.position.z=.001;node.mesh.visible=true;
+ node.uniforms.inheritedUV.value.set(0,0,1,1);
+ target=new THREE.WebGLRenderTarget(1,1);const bytes=new Uint8Array(4);
+ const sample=(coarse,detail,mix)=>{node.uniforms.inheritedMap.value=coarse;node.mesh.material.map=detail;node.uniforms.detailMix.value=mix;renderer.setRenderTarget(target);renderer.render(scene,camera);renderer.readRenderTargetPixels(target,0,0,1,1,bytes);return [...bytes];};
+ test('Transparent CTX child never erases the Viking underlay',()=>{for(const mix of [0,.1,.5,.9,1]){const p=sample(red,empty,mix);assert(p[0]>=253&&p[1]<=2&&p[2]<=2,`mix ${mix}: ${p}`);}});
+ test('Opaque gray CTX detail blends gradually from color',()=>{const a=sample(red,gray,0),b=sample(red,gray,.5),c=sample(red,gray,1);assert(a[0]>250&&a[1]<2,'Color start missing');assert(b[0]<a[0]&&b[0]>c[0]&&b[1]>0,'No intermediate blend');assert(Math.abs(c[0]-c[1])<=1&&Math.abs(c[1]-c[2])<=1,'Final CTX is not gray');});
+ test('Transparent intermediate CTX parent keeps ancestor color until detail arrives',()=>{const a=sample(empty,gray,0),b=sample(empty,gray,.5),c=sample(empty,gray,1);assert(a[0]>250&&a[1]<2,'Ancestor lost at zero blend');assert(b[0]>c[0]&&b[1]>0,'No smooth overlaid detail');assert(Math.abs(c[0]-c[1])<=1,'Final detail missing');});
+}catch(e){results.push({name:'WebGL test setup',passed:false,error:e.message});}
+finally{q?.dispose();target?.dispose();textures.forEach(t=>t.dispose());renderer?.dispose();}
+for(const result of results){const li=document.createElement('li');li.className=result.passed?'pass':'fail';li.textContent=`${result.passed?'PASS':'FAIL'}: ${result.name}${result.error?' — '+result.error:''}`;document.querySelector('#results').append(li);}
+document.querySelector('#summary').textContent=`${results.filter(r=>r.passed).length}/${results.length} passed (actual GPU framebuffer samples)`;
+</script>

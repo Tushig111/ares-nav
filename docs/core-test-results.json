@@ -1,0 +1,102 @@
+{
+  "syntaxFiles": [
+    "app.js",
+    "ar-mobile.js",
+    "audio.js",
+    "controls.js",
+    "data.js",
+    "exploration-workbench.js",
+    "geodesy.js",
+    "mars-quadtree-globe.js",
+    "measurement-tools.js",
+    "neural-survival.js",
+    "noise.js",
+    "shaders.js"
+  ],
+  "tests": [
+    {
+      "name": "Coincident point distance",
+      "passed": true
+    },
+    {
+      "name": "Quarter equator: independent circumference formula",
+      "passed": true
+    },
+    {
+      "name": "Dateline crossing chooses short arc",
+      "passed": true
+    },
+    {
+      "name": "Antipodal distance remains finite",
+      "passed": true
+    },
+    {
+      "name": "Quarter-circle chord: independent Pythagorean formula",
+      "passed": true
+    },
+    {
+      "name": "Polar octant area: one eighth of sphere",
+      "passed": true
+    },
+    {
+      "name": "Polygon winding does not change area",
+      "passed": true
+    },
+    {
+      "name": "Graphic latitude greater than centric in north",
+      "passed": true
+    },
+    {
+      "name": "Geodesic midpoint handles longitude seam",
+      "passed": true
+    },
+    {
+      "name": "Flat measured terrain distance matches sphere arc",
+      "passed": true
+    },
+    {
+      "name": "Missing measured DEM returns unavailable",
+      "passed": true
+    },
+    {
+      "name": "Invalid latitude is rejected",
+      "passed": true
+    },
+    {
+      "name": "Planetary GeoJSON closes polygons and discloses model",
+      "passed": true
+    },
+    {
+      "name": "Energy is additive and reported in kJ",
+      "passed": true
+    },
+    {
+      "name": "Nominal scenario continues EVA",
+      "passed": true
+    },
+    {
+      "name": "Low energy storm sprints to demo habitat",
+      "passed": true
+    },
+    {
+      "name": "50 kJ boundary selects ridge scenario",
+      "passed": true
+    },
+    {
+      "name": "High dose blocks sprint scenario",
+      "passed": true
+    },
+    {
+      "name": "Tight oxygen margin blocks sprint",
+      "passed": true
+    },
+    {
+      "name": "Steep scarp takes priority",
+      "passed": true
+    },
+    {
+      "name": "Forward pass has bounded, increasing stress response",
+      "passed": true
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Empty valid catalog means zero returned events",
+    "passed": true
+  },
+  {
+    "name": "Rate limiting means unknown count, never zero",
+    "passed": true
+  },
+  {
+    "name": "Malformed API payload is handled",
+    "passed": true
+  },
+  {
+    "name": "Latest event is determined chronologically",
+    "passed": true
+  },
+  {
+    "name": "Network failure is caught",
+    "passed": true
+  }
+]

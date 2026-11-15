@@ -1,0 +1,20 @@
+{
+  "version": "polar1",
+  "moduleTestsPassed": 42,
+  "projectionGeometryTestsPassed": 10,
+  "gpuBlendTestsPassed": 3,
+  "browserFlows": [
+    "Start Muted",
+    "projection selector modal",
+    "North Pole map",
+    "South Pole map",
+    "110x polar zoom and projected scale",
+    "return to Global via Orbital Globe"
+  ],
+  "observedConsoleErrors": 0,
+  "limits": [
+    "No universal no-stutter guarantee",
+    "Deep pole zoom retained Viking L3; native polar detail not guaranteed",
+    "DONKI unavailable in tested browser; unknown event count shown"
+  ]
+}

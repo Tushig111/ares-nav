@@ -185,7 +185,7 @@ export function createSpaceAudioEngine() {
   }
 
   function playClickSFX(type = 'tap') {
-    if (!isInitialized) initAudio();
+    if (!isInitialized) return;
     if (!ctx || !isPlaying || userVolume <= 0.01) return;
     if (ctx.state === 'suspended') ctx.resume();
     const now = ctx.currentTime;
@@ -276,7 +276,7 @@ export function createSpaceAudioEngine() {
   }
 
   function playQuindarTone(isIntro = true) {
-    if (!isInitialized) initAudio();
+    if (!isInitialized) return;
     if (!ctx || !isPlaying) return;
     const now = ctx.currentTime;
     const osc = ctx.createOscillator();

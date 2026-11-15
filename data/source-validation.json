@@ -1,0 +1,686 @@
+{
+  "checkedAt": "2026-11-14T16:54:52.542666+00:00",
+  "layers": [
+    {
+      "datasetId": "Mars_Viking_MDIM21_ClrMosaic_global_232m",
+      "metadataURL": "https://trek.nasa.gov/tiles/Mars/EQ/Mars_Viking_MDIM21_ClrMosaic_global_232m/1.0.0/WMTSCapabilities.xml",
+      "status": 200,
+      "sha256": "977e2037d634f9dc70f654ce176ca7e5775e336d9d4242d323bf55f1b4be4ec6",
+      "matrices": [
+        {
+          "Identifier": "0",
+          "ScaleDenominator": "2.7922763629807472E+08",
+          "TopLeftCorner": "-180.0 90.0",
+          "TileWidth": "256",
+          "TileHeight": "256",
+          "MatrixWidth": "2.0",
+          "MatrixHeight": "1.0"
+        },
+        {
+          "Identifier": "1",
+          "ScaleDenominator": "1.3961381814903736E+08",
+          "TopLeftCorner": "-180.0 90.0",
+          "TileWidth": "256",
+          "TileHeight": "256",
+          "MatrixWidth": "4.0",
+          "MatrixHeight": "2.0"
+        },
+        {
+          "Identifier": "2",
+          "ScaleDenominator": "6.9806909074518681E+07",
+          "TopLeftCorner": "-180.0 90.0",
+          "TileWidth": "256",
+          "TileHeight": "256",
+          "MatrixWidth": "8.0",
+          "MatrixHeight": "4.0"
+        },
+        {
+          "Identifier": "3",
+          "ScaleDenominator": "3.4903454537259340E+07",
+          "TopLeftCorner": "-180.0 90.0",
+          "TileWidth": "256",
+          "TileHeight": "256",
+          "MatrixWidth": "16.0",
+          "MatrixHeight": "8.0"
+        },
+        {
+          "Identifier": "4",
+          "ScaleDenominator": "1.7451727268629670E+07",
+          "TopLeftCorner": "-180.0 90.0",
+          "TileWidth": "256",
+          "TileHeight": "256",
+          "MatrixWidth": "32.0",
+          "MatrixHeight": "16.0"
+        },
+        {
+          "Identifier": "5",
+          "ScaleDenominator": "8.7258636343148351E+06",
+          "TopLeftCorner": "-180.0 90.0",
+          "TileWidth": "256",
+          "TileHeight": "256",
+          "MatrixWidth": "64.0",
+          "MatrixHeight": "32.0"
+        },
+        {
+          "Identifier": "6",
+          "ScaleDenominator": "4.3629318171574175E+06",
+          "TopLeftCorner": "-180.0 90.0",
+          "TileWidth": "256",
+          "TileHeight": "256",
+          "MatrixWidth": "128.0",
+          "MatrixHeight": "64.0"
+        },
+        {
+          "Identifier": "7",
+          "ScaleDenominator": "2.1814659085787088E+06",
+          "TopLeftCorner": "-180.0 90.0",
+          "TileWidth": "256",
+          "TileHeight": "256",
+          "MatrixWidth": "256.0",
+          "MatrixHeight": "128.0"
+        }
+      ],
+      "resourceURLs": [
+        {
+          "format": "image/jpeg",
+          "resourceType": "tile",
+          "template": "https://trek.nasa.gov/tiles/Mars/EQ/Mars_Viking_MDIM21_ClrMosaic_global_232m/1.0.0//{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpg"
+        }
+      ]
+    },
+    {
+      "datasetId": "CTX_beta01_uncontrolled_5m_Caltech",
+      "metadataURL": "https://trek.nasa.gov/tiles/Mars/EQ/CTX_beta01_uncontrolled_5m_Caltech/1.0.0/WMTSCapabilities.xml",
+      "status": 200,
+      "sha256": "16919bec258e3292e07f4a1b42d9d847accc929a0d93fa6cb0989b2ba50aafcf",
+      "matrices": [
+        {
+          "Identifier": "0",
+          "ScaleDenominator": "1.3961381814903736E+08",
+          "TopLeftCorner": "-180.0 90.0",
+          "TileWidth": "512",
+          "TileHeight": "512",
+          "MatrixWidth": "2.0",
+          "MatrixHeight": "1.0"
+        },
+        {
+          "Identifier": "1",
+          "ScaleDenominator": "6.9806909074518681E+07",
+          "TopLeftCorner": "-180.0 90.0",
+          "TileWidth": "512",
+          "TileHeight": "512",
+          "MatrixWidth": "4.0",
+          "MatrixHeight": "2.0"
+        },
+        {
+          "Identifier": "2",
+          "ScaleDenominator": "3.4903454537259340E+07",
+          "TopLeftCorner": "-180.0 90.0",
+          "TileWidth": "512",
+          "TileHeight": "512",
+          "MatrixWidth": "8.0",
+          "MatrixHeight": "4.0"
+        },
+        {
+          "Identifier": "3",
+          "ScaleDenominator": "1.7451727268629670E+07",
+          "TopLeftCorner": "-180.0 90.0",
+          "TileWidth": "512",
+          "TileHeight": "512",
+          "MatrixWidth": "16.0",
+          "MatrixHeight": "8.0"
+        },
+        {
+          "Identifier": "4",
+          "ScaleDenominator": "8.7258636343148351E+06",
+          "TopLeftCorner": "-180.0 90.0",
+          "TileWidth": "512",
+          "TileHeight": "512",
+          "MatrixWidth": "32.0",
+          "MatrixHeight": "16.0"
+        },
+        {
+          "Identifier": "5",
+          "ScaleDenominator": "4.3629318171574175E+06",
+          "TopLeftCorner": "-180.0 90.0",
+          "TileWidth": "512",
+          "TileHeight": "512",
+          "MatrixWidth": "64.0",
+          "MatrixHeight": "32.0"
+        },
+        {
+          "Identifier": "6",
+          "ScaleDenominator": "2.1814659085787088E+06",
+          "TopLeftCorner": "-180.0 90.0",
+          "TileWidth": "512",
+          "TileHeight": "512",
+          "MatrixWidth": "128.0",
+          "MatrixHeight": "64.0"
+        },
+        {
+          "Identifier": "7",
+          "ScaleDenominator": "1.0907329542893544E+06",
+          "TopLeftCorner": "-180.0 90.0",
+          "TileWidth": "512",
+          "TileHeight": "512",
+          "MatrixWidth": "256.0",
+          "MatrixHeight": "128.0"
+        },
+        {
+          "Identifier": "8",
+          "ScaleDenominator": "5.4536647714467719E+05",
+          "TopLeftCorner": "-180.0 90.0",
+          "TileWidth": "512",
+          "TileHeight": "512",
+          "MatrixWidth": "512.0",
+          "MatrixHeight": "256.0"
+        },
+        {
+          "Identifier": "9",
+          "ScaleDenominator": "2.7268323857233860E+05",
+          "TopLeftCorner": "-180.0 90.0",
+          "TileWidth": "512",
+          "TileHeight": "512",
+          "MatrixWidth": "1024.0",
+          "MatrixHeight": "512.0"
+        },
+        {
+          "Identifier": "10",
+          "ScaleDenominator": "1.3634161928616930E+05",
+          "TopLeftCorner": "-180.0 90.0",
+          "TileWidth": "512",
+          "TileHeight": "512",
+          "MatrixWidth": "2048.0",
+          "MatrixHeight": "1024.0"
+        },
+        {
+          "Identifier": "11",
+          "ScaleDenominator": "6.8170809643084649E+04",
+          "TopLeftCorner": "-180.0 90.0",
+          "TileWidth": "512",
+          "TileHeight": "512",
+          "MatrixWidth": "4096.0",
+          "MatrixHeight": "2048.0"
+        }
+      ],
+      "resourceURLs": [
+        {
+          "format": "image/png",
+          "resourceType": "tile",
+          "template": "https://astro.arcgis.com/arcgis/rest/services/OnMars/CTX/MapServer/tile/{TileMatrix}/{TileRow}/{TileCol}"
+        }
+      ]
+    },
+    {
+      "datasetId": "Mars_MGS_MOLA_ClrShade_merge_global_463m",
+      "metadataURL": "https://trek.nasa.gov/tiles/Mars/EQ/Mars_MGS_MOLA_ClrShade_merge_global_463m/1.0.0/WMTSCapabilities.xml",
+      "status": 200,
+      "sha256": "2fb4722b5af0417980052354eab806cb9bdea003617548433cec8d8813d8d125",
+      "matrices": [
+        {
+          "Identifier": "0",
+          "ScaleDenominator": "2.7922763629807472E+08",
+          "TopLeftCorner": "-180.0 90.0",
+          "TileWidth": "256",
+          "TileHeight": "256",
+          "MatrixWidth": "2.0",
+          "MatrixHeight": "1.0"
+        },
+        {
+          "Identifier": "1",
+          "ScaleDenominator": "1.3961381814903736E+08",
+          "TopLeftCorner": "-180.0 90.0",
+          "TileWidth": "256",
+          "TileHeight": "256",
+          "MatrixWidth": "4.0",
+          "MatrixHeight": "2.0"
+        },
+        {
+          "Identifier": "2",
+          "ScaleDenominator": "6.9806909074518681E+07",
+          "TopLeftCorner": "-180.0 90.0",
+          "TileWidth": "256",
+          "TileHeight": "256",
+          "MatrixWidth": "8.0",
+          "MatrixHeight": "4.0"
+        },
+        {
+          "Identifier": "3",
+          "ScaleDenominator": "3.4903454537259340E+07",
+          "TopLeftCorner": "-180.0 90.0",
+          "TileWidth": "256",
+          "TileHeight": "256",
+          "MatrixWidth": "16.0",
+          "MatrixHeight": "8.0"
+        },
+        {
+          "Identifier": "4",
+          "ScaleDenominator": "1.7451727268629670E+07",
+          "TopLeftCorner": "-180.0 90.0",
+          "TileWidth": "256",
+          "TileHeight": "256",
+          "MatrixWidth": "32.0",
+          "MatrixHeight": "16.0"
+        },
+        {
+          "Identifier": "5",
+          "ScaleDenominator": "8.7258636343148351E+06",
+          "TopLeftCorner": "-180.0 90.0",
+          "TileWidth": "256",
+          "TileHeight": "256",
+          "MatrixWidth": "64.0",
+          "MatrixHeight": "32.0"
+        },
+        {
+          "Identifier": "6",
+          "ScaleDenominator": "4.3629318171574175E+06",
+          "TopLeftCorner": "-180.0 90.0",
+          "TileWidth": "256",
+          "TileHeight": "256",
+          "MatrixWidth": "128.0",
+          "MatrixHeight": "64.0"
+        },
+        {
+          "Identifier": "7",
+          "ScaleDenominator": "2.1814659085787088E+06",
+          "TopLeftCorner": "-180.0 90.0",
+          "TileWidth": "256",
+          "TileHeight": "256",
+          "MatrixWidth": "256.0",
+          "MatrixHeight": "128.0"
+        }
+      ],
+      "resourceURLs": [
+        {
+          "format": "image/jpeg",
+          "resourceType": "tile",
+          "template": "https://trek.nasa.gov/tiles/Mars/EQ/Mars_MGS_MOLA_ClrShade_merge_global_463m/1.0.0//{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpg"
+        }
+      ]
+    }
+  ],
+  "photos": [
+    {
+      "id": "PIA26551",
+      "catalogURL": "https://photojournal.jpl.nasa.gov/catalog/PIA26551",
+      "resolvedPage": "https://science.nasa.gov/photojournal/curiosity-looks-downslope-from-the-sulfate-unit/",
+      "status": 200,
+      "title": "Curiosity Looks Downslope From the Sulfate Unit - NASA Science",
+      "image": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia26/pia26551/PIA26551.jpg/jcr:content/renditions/cq5dam.web.1280.1280.jpeg",
+      "description": "NASA's Curiosity Mars rover captured this view looking back down at the floor of Gale Crater from its location on Mount Sharp on Feb. 7, 2025.",
+      "downloads": [
+        "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia26/pia26551/PIA26551.jpg"
+      ],
+      "assetCheck": {
+        "error": "HTTP Error 404: Not Found"
+      },
+      "verifiedImageURL": "https://assets.science.nasa.gov/dynamicimage/assets/science/psd/photojournal/pia/pia26/pia26551/PIA26551.jpg?w=1280&fit=clip",
+      "verifiedImageCheck": {
+        "status": 200,
+        "contentType": "image/jpeg",
+        "contentLength": null,
+        "isResizedPreview": true
+      }
+    },
+    {
+      "id": "PIA26552",
+      "catalogURL": "https://photojournal.jpl.nasa.gov/catalog/PIA26552",
+      "resolvedPage": "https://science.nasa.gov/photojournal/curiosity-on-the-road-to-boxwork-formations/",
+      "status": 200,
+      "title": "Curiosity on the Road to Boxwork Formations - NASA Science",
+      "image": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia26/pia26552/figures/PIA26552_figA_thumb.jpg/jcr:content/renditions/cq5dam.web.1280.1280.jpeg",
+      "description": "This panorama, made up of 122 individual images stitched together, was taken by NASA's Curiosity Mars rover on November 18, 2020, the 2,946th Martian day, or sol, of the mission.",
+      "downloads": [
+        "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia26/pia26552/PIA26552.jpg",
+        "https://assets.science.nasa.gov/dynamicimage/assets/science/psd/photojournal/pia/pia26/pia26552/figures/PIA26552_figA_thumb.jpg"
+      ],
+      "assetCheck": {
+        "status": 200,
+        "resolvedURL": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia26/pia26552/figures/PIA26552_figA_thumb.jpg/jcr:content/renditions/cq5dam.web.1280.1280.jpeg",
+        "contentType": "image/jpeg"
+      },
+      "verifiedImageURL": "https://assets.science.nasa.gov/dynamicimage/assets/science/psd/photojournal/pia/pia26/pia26552/PIA26552.jpg?w=1280&fit=clip",
+      "verifiedImageCheck": {
+        "status": 200,
+        "contentType": "image/jpeg",
+        "contentLength": null,
+        "isResizedPreview": true
+      }
+    },
+    {
+      "id": "PIA26632",
+      "catalogURL": "https://photojournal.jpl.nasa.gov/catalog/PIA26632",
+      "resolvedPage": "https://science.nasa.gov/photojournal/curiosity-captures-mars-landscape-while-talking-to-an-orbiter/",
+      "status": 200,
+      "title": "Curiosity Captures Mars Landscape While Talking to an Orbiter - NASA Science",
+      "image": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia26/pia26632/figures/PIA26632_figA_thumb.jpg/jcr:content/renditions/cq5dam.web.1280.1280.jpeg",
+      "description": "This view of tracks trailing behind NASA's Curiosity was captured while the rover simultaneously relayed data to a Mars orbiter.",
+      "downloads": [
+        "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia26/pia26632/PIA26632.jpg",
+        "https://photojournal.jpl.nasa.gov/figures/PIA26632_figA.png"
+      ],
+      "assetCheck": {
+        "status": 200,
+        "resolvedURL": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia26/pia26632/figures/PIA26632_figA_thumb.jpg/jcr:content/renditions/cq5dam.web.1280.1280.jpeg",
+        "contentType": "image/jpeg"
+      },
+      "verifiedImageURL": "https://assets.science.nasa.gov/dynamicimage/assets/science/psd/photojournal/pia/pia26/pia26632/PIA26632.jpg?w=1280&fit=clip",
+      "verifiedImageCheck": {
+        "status": 200,
+        "contentType": "image/jpeg",
+        "contentLength": null,
+        "isResizedPreview": true
+      }
+    },
+    {
+      "id": "PIA26367",
+      "catalogURL": "https://photojournal.jpl.nasa.gov/catalog/PIA26367",
+      "resolvedPage": "https://science.nasa.gov/photojournal/curiosity-views-gediz-vallis-channel/",
+      "status": 200,
+      "title": "Curiosity Views Gediz Vallis Channel - NASA Science",
+      "image": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia26/pia26367/PIA26367.jpg/jcr:content/renditions/cq5dam.web.1280.1280.jpeg",
+      "description": "NASA's Curiosity Mars rover captured this view of Gediz Vallis channel on March 31. This area was likely formed by large floods of water and debris that piled jumbles of rocks into mounds within the channel.",
+      "downloads": [
+        "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia26/pia26367/PIA26367.jpg",
+        "https://www.nasa.gov/wp-content/uploads/2023/09/e2-pia26042-curiositys-path-beyond-gediz-vallis-ridge-still.jpg"
+      ],
+      "assetCheck": {
+        "error": "HTTP Error 404: Not Found"
+      },
+      "verifiedImageURL": "https://assets.science.nasa.gov/dynamicimage/assets/science/psd/photojournal/pia/pia26/pia26367/PIA26367.jpg?w=1280&fit=clip",
+      "verifiedImageCheck": {
+        "status": 200,
+        "contentType": "image/jpeg",
+        "contentLength": null,
+        "isResizedPreview": true
+      }
+    },
+    {
+      "id": "PIA26231",
+      "catalogURL": "https://photojournal.jpl.nasa.gov/catalog/PIA26231",
+      "resolvedPage": "https://science.nasa.gov/photojournal/1000-days-of-perseverance/",
+      "status": 200,
+      "title": "1,000 Days of Perseverance - NASA Science",
+      "image": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia26/pia26231/figures/PIA26231_figA_thumb.jpg/jcr:content/renditions/cq5dam.web.1280.1280.jpeg",
+      "description": "The path taken by NASA's Perseverance Mars rover during the first 1,000 sols of its mission at Jezero Crater is annotated on this overhead view taken by the HiRISE camera aboard the agency's Mars Reconnaissance Orbiter.",
+      "downloads": [
+        "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia26/pia26231/PIA26231.jpg",
+        "https://assets.science.nasa.gov/dynamicimage/assets/science/psd/photojournal/pia/pia26/pia26231/figures/PIA26231_figA.jpg"
+      ],
+      "assetCheck": {
+        "status": 200,
+        "resolvedURL": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia26/pia26231/figures/PIA26231_figA_thumb.jpg/jcr:content/renditions/cq5dam.web.1280.1280.jpeg",
+        "contentType": "image/jpeg"
+      },
+      "verifiedImageURL": "https://assets.science.nasa.gov/dynamicimage/assets/science/psd/photojournal/pia/pia26/pia26231/PIA26231.jpg?w=1280&fit=clip",
+      "verifiedImageCheck": {
+        "status": 200,
+        "contentType": "image/jpeg",
+        "contentLength": null,
+        "isResizedPreview": true
+      }
+    },
+    {
+      "id": "PIA25690",
+      "catalogURL": "https://photojournal.jpl.nasa.gov/catalog/PIA25690",
+      "resolvedPage": "https://science.nasa.gov/photojournal/perseverances-rock-core-from-berea-outcrop/",
+      "status": 200,
+      "title": "Perseverance's Rock Core From 'Berea' Outcrop - NASA Science",
+      "image": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia25/pia25690/PIA25690.jpg/jcr:content/renditions/cq5dam.web.1280.1280.jpeg",
+      "description": "This image shows the rock core from Berea inside inside the drill of NASA's Perseverance Mars rover. Each core the rover takes is about the size of a piece of classroom chalk: 0.5 inches (13 millimeters) in diameter and 2.4 inches (60 millimeters) long.",
+      "downloads": [
+        "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia25/pia25690/PIA25690.jpg"
+      ],
+      "assetCheck": {
+        "error": "HTTP Error 404: Not Found"
+      },
+      "verifiedImageURL": "https://assets.science.nasa.gov/dynamicimage/assets/science/psd/photojournal/pia/pia25/pia25690/PIA25690.jpg?w=1280&fit=clip",
+      "verifiedImageCheck": {
+        "status": 200,
+        "contentType": "image/jpeg",
+        "contentLength": null,
+        "isResizedPreview": true
+      }
+    },
+    {
+      "id": "PIA26370",
+      "catalogURL": "https://photojournal.jpl.nasa.gov/catalog/PIA26370",
+      "resolvedPage": "https://science.nasa.gov/photojournal/mastcam-z-views-leopard-spots-in-perseverances-drill-bit/",
+      "status": 200,
+      "title": "Mastcam-Z Views 'Leopard Spots' in Perseverance's Drill Bit - NASA Science",
+      "image": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia26/pia26370/PIA26370.jpg/jcr:content/renditions/cq5dam.web.1280.1280.jpeg",
+      "description": "NASA's Perseverance used its Mastcam-Z instrument to view the Cheyava Falls rock sample within the rover's drill bit.",
+      "downloads": [
+        "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia26/pia26370/PIA26370.jpg"
+      ],
+      "assetCheck": {
+        "error": "HTTP Error 404: Not Found"
+      },
+      "verifiedImageURL": "https://assets.science.nasa.gov/dynamicimage/assets/science/psd/photojournal/pia/pia26/pia26370/PIA26370.jpg?w=1280&fit=clip",
+      "verifiedImageCheck": {
+        "status": 200,
+        "contentType": "image/jpeg",
+        "contentLength": null,
+        "isResizedPreview": true
+      }
+    },
+    {
+      "id": "PIA26335",
+      "catalogURL": "https://photojournal.jpl.nasa.gov/catalog/PIA26335",
+      "resolvedPage": "https://science.nasa.gov/photojournal/perseverances-view-of-neretva-vallis-river-channel/",
+      "status": 200,
+      "title": "Perseverance's View of Neretva Vallis River Channel - NASA Science",
+      "image": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia26/pia26335/figures/PIA26335_figA_thumb.jpg/jcr:content/renditions/cq5dam.web.1280.1280.jpeg",
+      "description": "Perseverance captured this mosaic looking downstream of the dune-filled Neretva Vallis river channel on May 17, 2024. The channel fed Jezero Crater with fresh water billions of years ago.",
+      "downloads": [
+        "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia26/pia26335/PIA26335.jpg",
+        "https://assets.science.nasa.gov/dynamicimage/assets/science/psd/photojournal/pia/pia26/pia26335/figures/PIA26335_figA.jpg"
+      ],
+      "assetCheck": {
+        "status": 200,
+        "resolvedURL": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia26/pia26335/figures/PIA26335_figA_thumb.jpg/jcr:content/renditions/cq5dam.web.1280.1280.jpeg",
+        "contentType": "image/jpeg"
+      },
+      "verifiedImageURL": "https://assets.science.nasa.gov/dynamicimage/assets/science/psd/photojournal/pia/pia26/pia26335/PIA26335.jpg?w=1280&fit=clip",
+      "verifiedImageCheck": {
+        "status": 200,
+        "contentType": "image/jpeg",
+        "contentLength": null,
+        "isResizedPreview": true
+      }
+    },
+    {
+      "id": "PIA23817",
+      "catalogURL": "https://photojournal.jpl.nasa.gov/catalog/PIA23817",
+      "resolvedPage": "https://science.nasa.gov/photojournal/pj-melas-chasma-15/",
+      "status": 200,
+      "title": "Melas Chasma - NASA Science",
+      "image": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia23/pia23817/figures/PIA23817_fig1.png/jcr:content/renditions/cq5dam.web.1280.1280.png",
+      "description": "This image from NASA's Mars Odyssey shows Melas Chasma. The linear and arcuate features at the top of the image are on the surface of a large landslide.",
+      "downloads": [
+        "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia23/pia23817/PIA23817.jpg",
+        "https://assets.science.nasa.gov/dynamicimage/assets/science/psd/photojournal/pia/pia23/pia23817/figures/PIA23817_fig1.png"
+      ],
+      "assetCheck": {
+        "error": "HTTP Error 404: Not Found"
+      },
+      "verifiedImageURL": "https://assets.science.nasa.gov/dynamicimage/assets/science/psd/photojournal/pia/pia23/pia23817/PIA23817.jpg?w=1280&fit=clip",
+      "verifiedImageCheck": {
+        "status": 200,
+        "contentType": "image/jpeg",
+        "contentLength": null,
+        "isResizedPreview": true
+      }
+    },
+    {
+      "id": "PIA13055",
+      "catalogURL": "https://photojournal.jpl.nasa.gov/catalog/PIA13055",
+      "resolvedPage": "https://science.nasa.gov/photojournal/pj-melas-chasma-4/",
+      "status": 200,
+      "title": "Melas Chasma - NASA Science",
+      "image": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia13/pia13055/figures/PIA13055_fig1.png/jcr:content/renditions/cq5dam.web.1280.1280.png",
+      "description": "Melas Chasma is the central portion of Valles Marineris. This image taken by NASA's 2001 Mars Odyssey shows a small portion of the floor of Melas Chasma, including layered deposits and wind eroded and deposited materials.",
+      "downloads": [
+        "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia13/pia13055/PIA13055.jpg",
+        "https://assets.science.nasa.gov/dynamicimage/assets/science/psd/photojournal/pia/pia13/pia13055/figures/PIA13055_fig1.png"
+      ],
+      "assetCheck": {
+        "status": 200,
+        "resolvedURL": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia13/pia13055/figures/PIA13055_fig1.png/jcr:content/renditions/cq5dam.web.1280.1280.png",
+        "contentType": "image/png"
+      },
+      "verifiedImageURL": "https://assets.science.nasa.gov/dynamicimage/assets/science/psd/photojournal/pia/pia13/pia13055/PIA13055.jpg?w=1280&fit=clip",
+      "verifiedImageCheck": {
+        "status": 200,
+        "contentType": "image/jpeg",
+        "contentLength": null,
+        "isResizedPreview": true
+      }
+    },
+    {
+      "id": "PIA19782",
+      "catalogURL": "https://photojournal.jpl.nasa.gov/catalog/PIA19782",
+      "resolvedPage": "https://science.nasa.gov/photojournal/pj-melas-chasma-13/",
+      "status": 200,
+      "title": "Melas Chasma - NASA Science",
+      "image": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia19/pia19782/PIA19782.jpg/jcr:content/renditions/cq5dam.web.1280.1280.jpeg",
+      "description": "This image captured by NASA's 2001 Mars Odyssey spacecraft shows part of the floor of Melas Chasma, which is part of the much larger Valles Marineris.",
+      "downloads": [
+        "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia19/pia19782/PIA19782.jpg",
+        "https://assets.science.nasa.gov/dynamicimage/assets/science/psd/photojournal/pia/pia19/pia19782/figures/PIA19782_fig1.png"
+      ],
+      "assetCheck": {
+        "error": "HTTP Error 404: Not Found"
+      },
+      "verifiedImageURL": "https://assets.science.nasa.gov/dynamicimage/assets/science/psd/photojournal/pia/pia19/pia19782/PIA19782.jpg?w=1280&fit=clip",
+      "verifiedImageCheck": {
+        "status": 200,
+        "contentType": "image/jpeg",
+        "contentLength": null,
+        "isResizedPreview": true
+      }
+    },
+    {
+      "id": "PIA22000",
+      "catalogURL": "https://photojournal.jpl.nasa.gov/catalog/PIA22000",
+      "resolvedPage": "https://science.nasa.gov/photojournal/investigating-mars-coprates-chasma-10/",
+      "status": 200,
+      "title": "Investigating Mars: Coprates Chasma - NASA Science",
+      "image": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia22/pia22000/figures/PIA22000_fig1.png/jcr:content/renditions/cq5dam.web.1280.1280.png",
+      "description": "This image from NASA's 2001 Mars Odyssey spacecraft is located in central Coprates Chasma. The brighter materials at the bottom of the image are layered deposits. It is unknown how deep these canyon deposits were when they formed.",
+      "downloads": [
+        "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia22/pia22000/PIA22000.jpg",
+        "https://assets.science.nasa.gov/dynamicimage/assets/science/psd/photojournal/pia/pia22/pia22000/figures/PIA22000_fig1.png"
+      ],
+      "assetCheck": {
+        "status": 200,
+        "resolvedURL": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia22/pia22000/figures/PIA22000_fig1.png/jcr:content/renditions/cq5dam.web.1280.1280.png",
+        "contentType": "image/png"
+      },
+      "verifiedImageURL": "https://assets.science.nasa.gov/dynamicimage/assets/science/psd/photojournal/pia/pia22/pia22000/PIA22000.jpg?w=1280&fit=clip",
+      "verifiedImageCheck": {
+        "status": 200,
+        "contentType": "image/jpeg",
+        "contentLength": null,
+        "isResizedPreview": true
+      }
+    },
+    {
+      "id": "PIA26305",
+      "catalogURL": "https://photojournal.jpl.nasa.gov/catalog/PIA26305",
+      "resolvedPage": "https://science.nasa.gov/photojournal/odysseys-themis-views-olympus-mons/",
+      "status": 200,
+      "title": "Odyssey's THEMIS Views Olympus Mons - NASA Science",
+      "image": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia26/pia26305/PIA26305.jpg/jcr:content/renditions/cq5dam.web.1280.1280.jpeg",
+      "description": "NASA's 2001 Mars Odyssey orbiter captured this single image of Olympus Mons, the tallest volcano in the solar system, on March 11, 2024.",
+      "downloads": [
+        "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia26/pia26305/PIA26305.jpg"
+      ],
+      "assetCheck": {
+        "error": "HTTP Error 404: Not Found"
+      },
+      "verifiedImageURL": "https://assets.science.nasa.gov/dynamicimage/assets/science/psd/photojournal/pia/pia26/pia26305/PIA26305.jpg?w=1280&fit=clip",
+      "verifiedImageCheck": {
+        "status": 200,
+        "contentType": "image/jpeg",
+        "contentLength": null,
+        "isResizedPreview": true
+      }
+    },
+    {
+      "id": "PIA23297",
+      "catalogURL": "https://photojournal.jpl.nasa.gov/catalog/PIA23297",
+      "resolvedPage": "https://science.nasa.gov/photojournal/pj-olympus-mons-22/",
+      "status": 200,
+      "title": "Olympus Mons - NASA Science",
+      "image": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia23/pia23297/figures/PIA23297_fig1.png/jcr:content/renditions/cq5dam.web.1280.1280.png",
+      "description": "This image from NASA's Mars Odyssey shows the upper flank of Olympus Mons. Olympus Mons is the largest volcano in the solar system.",
+      "downloads": [
+        "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia23/pia23297/PIA23297.jpg",
+        "https://assets.science.nasa.gov/dynamicimage/assets/science/psd/photojournal/pia/pia23/pia23297/figures/PIA23297_fig1.png"
+      ],
+      "assetCheck": {
+        "status": 200,
+        "resolvedURL": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia23/pia23297/figures/PIA23297_fig1.png/jcr:content/renditions/cq5dam.web.1280.1280.png",
+        "contentType": "image/png"
+      },
+      "verifiedImageURL": "https://assets.science.nasa.gov/dynamicimage/assets/science/psd/photojournal/pia/pia23/pia23297/PIA23297.jpg?w=1280&fit=clip",
+      "verifiedImageCheck": {
+        "status": 200,
+        "contentType": "image/jpeg",
+        "contentLength": null,
+        "isResizedPreview": true
+      }
+    },
+    {
+      "id": "PIA25476",
+      "catalogURL": "https://photojournal.jpl.nasa.gov/catalog/PIA25476",
+      "resolvedPage": "https://science.nasa.gov/photojournal/pj-olympus-mons-25/",
+      "status": 200,
+      "title": "Olympus Mons - NASA Science",
+      "image": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia25/pia25476/figures/PIA25476_fig1.png/jcr:content/renditions/cq5dam.web.1280.1280.png",
+      "description": "This image from NASA's Mars Odyssey shows the upper elevations of Olympus Mons, including part of the summit caldera.",
+      "downloads": [
+        "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia25/pia25476/PIA25476.jpg",
+        "https://assets.science.nasa.gov/dynamicimage/assets/science/psd/photojournal/pia/pia25/pia25476/figures/PIA25476_fig1.png"
+      ],
+      "assetCheck": {
+        "status": 200,
+        "resolvedURL": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia25/pia25476/figures/PIA25476_fig1.png/jcr:content/renditions/cq5dam.web.1280.1280.png",
+        "contentType": "image/png"
+      },
+      "verifiedImageURL": "https://assets.science.nasa.gov/dynamicimage/assets/science/psd/photojournal/pia/pia25/pia25476/PIA25476.jpg?w=1280&fit=clip",
+      "verifiedImageCheck": {
+        "status": 200,
+        "contentType": "image/jpeg",
+        "contentLength": null,
+        "isResizedPreview": true
+      }
+    },
+    {
+      "id": "PIA14162",
+      "catalogURL": "https://photojournal.jpl.nasa.gov/catalog/PIA14162",
+      "resolvedPage": "https://science.nasa.gov/photojournal/pj-olympus-mons-flows-3/",
+      "status": 200,
+      "title": "Olympus Mons Flows - NASA Science",
+      "image": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia14/pia14162/figures/PIA14162_fig1.png/jcr:content/renditions/cq5dam.web.1280.1280.png",
+      "description": "This image captured by NASA's 2001 Mars Odyssey shows lava flows in the southern escarpment region of Olympus Mons, the largest known volcano in the solar system.",
+      "downloads": [
+        "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia14/pia14162/PIA14162.jpg",
+        "https://assets.science.nasa.gov/dynamicimage/assets/science/psd/photojournal/pia/pia14/pia14162/figures/PIA14162_fig1.png"
+      ],
+      "assetCheck": {
+        "status": 200,
+        "resolvedURL": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia14/pia14162/figures/PIA14162_fig1.png/jcr:content/renditions/cq5dam.web.1280.1280.png",
+        "contentType": "image/png"
+      },
+      "verifiedImageURL": "https://assets.science.nasa.gov/dynamicimage/assets/science/psd/photojournal/pia/pia14/pia14162/PIA14162.jpg?w=1280&fit=clip",
+      "verifiedImageCheck": {
+        "status": 200,
+        "contentType": "image/jpeg",
+        "contentLength": null,
+        "isResizedPreview": true
+      }
+    }
+  ]
+}

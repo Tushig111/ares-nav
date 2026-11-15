@@ -1,0 +1,32 @@
+{
+  "environment": "Real Three.js geometry, synthetic successful image delivery and mocked upload; 1000 frames at radius 4.64, near plane .01",
+  "latest": {
+    "layer": "optical",
+    "sourceLayer": "ctx",
+    "level": 9,
+    "geometryLevel": 9,
+    "textures": 136,
+    "active": 0,
+    "leaves": 12,
+    "blending": false,
+    "message": "MRO CTX High-Res L9 · native 5 m/px · tile ~41 m/px (equator)",
+    "diagnostics": "136/220 textures · 0/12 requests"
+  },
+  "maxActive": 8,
+  "maxCache": 136,
+  "pins": 44,
+  "reservations": 0,
+  "queue": 0,
+  "visibleLevels": {
+    "1": 4,
+    "2": 12,
+    "3": 12,
+    "4": 12,
+    "5": 12,
+    "6": 16,
+    "7": 16,
+    "8": 16,
+    "9": 16
+  },
+  "transitions": []
+}

@@ -1,0 +1,23 @@
+[
+  {
+    "protocol": "file:",
+    "fail": false,
+    "imports": 0,
+    "buttonsDisabled": true,
+    "message": "Open “Start ARES.command” in this extracted folder to launch the app. Keep its Terminal window open, then choose Start with Audio in the browser. Or run: python3 -m http.server 8000 and open http://localhost:8000/."
+  },
+  {
+    "protocol": "http:",
+    "fail": false,
+    "imports": 1,
+    "buttonsDisabled": false,
+    "message": "PARTICLE GLOBE READY · CHOOSE AUDIO MODE"
+  },
+  {
+    "protocol": "http:",
+    "fail": true,
+    "imports": 1,
+    "buttonsDisabled": true,
+    "message": "The app could not load. Check your internet connection (Three.js loads from a CDN), then refresh. Use localhost or GitHub Pages, rather than opening index.html directly."
+  }
+]

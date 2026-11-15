@@ -1,0 +1,21 @@
+{
+  "environment": "VM with minimal Three.js constructors; no WebGL",
+  "tests": [
+    {
+      "name": "LRU eviction disposes oldest unpinned texture",
+      "passed": true
+    },
+    {
+      "name": "Pinned frontier is retained instead of forced eviction",
+      "passed": true
+    },
+    {
+      "name": "Refined descendants retain coverage after intermediate eviction",
+      "passed": true
+    },
+    {
+      "name": "Unavailable thermal selection preserves current layer",
+      "passed": true
+    }
+  ]
+}
