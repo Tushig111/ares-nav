@@ -1,22 +1,23 @@
-import {createGeologyLayers} from './geology-layers.js?v=geology1';
-import {createProximityLabels} from './proximity-labels.js?v=geology1';
-import {createMobileShell} from './mobile-shell.js?v=geology1';
-import { pickReferenceMap } from './map-picking.js?v=geology1';
-import { createTrekSearch } from './trek-search.js?v=geology1';
-import { createVehicles } from './vehicles.js?v=geology1';
-import { createProjectionController } from './projections.js?v=geology1';
-import { fetchDonkiCatalog, installProvenance } from './official-data.js?v=geology1';
-import { MarsQuadtreeGlobe, spherePoint, rectanglePoint } from './mars-quadtree-globe.js?v=geology1';
-import { createWorkbench } from './exploration-workbench.js?v=geology1';
-import { createMobileAR } from './ar-mobile.js?v=geology1';
-import { destination } from './geodesy.js?v=geology1';
-import { bindControls } from './controls.js?v=geology1';
+import {createScienceLayerLibrary} from './science-layer-library.js?v=layers8';
+import {createGeologyLayers} from './geology-layers.js?v=layers8';
+import {createProximityLabels} from './proximity-labels.js?v=layers8';
+import {createMobileShell} from './mobile-shell.js?v=layers8';
+import { pickReferenceMap } from './map-picking.js?v=layers8';
+import { createTrekSearch } from './trek-search.js?v=layers8';
+import { createVehicles } from './vehicles.js?v=layers8';
+import { createProjectionController } from './projections.js?v=layers8';
+import { fetchDonkiCatalog, installProvenance } from './official-data.js?v=layers8';
+import { MarsQuadtreeGlobe, spherePoint, rectanglePoint } from './mars-quadtree-globe.js?v=layers8';
+import { createWorkbench } from './exploration-workbench.js?v=layers8';
+import { createMobileAR } from './ar-mobile.js?v=layers8';
+import { destination } from './geodesy.js?v=layers8';
+import { bindControls } from './controls.js?v=layers8';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { createSpaceAudioEngine } from './audio.js?v=geology1';
-import { SITES, LAYERS } from './data.js?v=geology1';
-import { hash2, valueNoise, fbm, ridgedFbm } from './noise.js?v=geology1';
-import { GLSL_PARTICLE_VERTEX_SHADER, GLSL_PARTICLE_FRAGMENT_SHADER, GLSL_SPARKLE_VERTEX_SHADER, GLSL_SPARKLE_FRAGMENT_SHADER, GLSL_TERRAIN_VERTEX_SHADER, GLSL_TERRAIN_FRAGMENT_SHADER } from './shaders.js?v=geology1';
+import { createSpaceAudioEngine } from './audio.js?v=layers8';
+import { SITES, LAYERS } from './data.js?v=layers8';
+import { hash2, valueNoise, fbm, ridgedFbm } from './noise.js?v=layers8';
+import { GLSL_PARTICLE_VERTEX_SHADER, GLSL_PARTICLE_FRAGMENT_SHADER, GLSL_SPARKLE_VERTEX_SHADER, GLSL_SPARKLE_FRAGMENT_SHADER, GLSL_TERRAIN_VERTEX_SHADER, GLSL_TERRAIN_FRAGMENT_SHADER } from './shaders.js?v=layers8';
 
 // 1. CHLADNI-PLATE AUTONOMOUS CYMATIC STANDING-WAVE GPU SHADERS
 //    C(x, z) = a * sin(PI * n * x) * sin(PI * m * z) + b * sin(PI * m * x) * sin(PI * n * z)
@@ -3847,6 +3848,7 @@ function initializeExplorationTools() {
   proximityLabels=createProximityLabels(api,record=>{if(matchMedia('(max-width:768px)').matches)mobileShell?.open('Search');trekPanel.reveal(record);});
   mobileShell=createMobileShell(api,trekPanel);
   geologyLayers=createGeologyLayers(api,trekPanel.host.querySelector('[data-renderer-layers]'));
+  createScienceLayerLibrary(api,trekPanel.host.querySelector('[data-renderer-layers]'));
 
   vehicles=createVehicles({parent:surfaceGroup,getSite:()=>SITES[state.siteIndex],getHeight:getSiteHeight,getMode:()=>state.mode,host:upgrades.host,enterSurface:()=>{if(state.mode==='orbital')window.setMode('hybrid');},focus:(point,offset)=>{surfaceParticles.visible=false;routeGroup.visible=false;placeDemoGroup.visible=false;scrubRing.visible=false;dropPreviewGroup.visible=false;astronautRig.root.visible=false;controls.minDistance=.12;state.autoSpin=false;state.suitDemoActive=false;state.povMode='free';controls.enabled=true;state.isCameraTransitioning=false;controls.target.copy(point);camera.position.copy(point).add(offset);camera.lookAt(point);controls.update();}});
 
