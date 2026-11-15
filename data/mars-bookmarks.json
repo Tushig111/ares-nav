@@ -1,0 +1,309 @@
+[
+  {
+    "id": "bookmark-1",
+    "name": "Jezero Crater Features and Landforms (Perseverance / Mars 2020)",
+    "type": "Bookmark",
+    "lat": 18.38,
+    "lon": 77.58,
+    "points": [
+      {
+        "name": "Jezero Crater",
+        "lat": 18.38,
+        "lon": 77.58,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Perseverance Landing Ellipse",
+        "lat": 18.4447,
+        "lon": 77.4508,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Octavia E. Butler Landing",
+        "lat": 18.4447,
+        "lon": 77.4508,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Western Delta Deposit",
+        "lat": 18.49,
+        "lon": 77.38,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Northern Delta Deposit",
+        "lat": 18.63,
+        "lon": 77.59,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Western Breach / Neretva Vallis",
+        "lat": 18.51,
+        "lon": 77.26,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Western Inflow Channel",
+        "lat": 18.47,
+        "lon": 77.15,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Northern Inflow Channel / Sava Vallis",
+        "lat": 18.72,
+        "lon": 77.56,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Outflow Channel / Pliva Vallis",
+        "lat": 18.42,
+        "lon": 78.02,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Belva Crater",
+        "lat": 18.46,
+        "lon": 77.39,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Three Forks Sample Depot",
+        "lat": 18.4,
+        "lon": 77.43,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      }
+    ],
+    "sourceURL": "https://science.nasa.gov/mission/mars-2020-perseverance/location-map/",
+    "provenance": "Curated study bookmark; approximate supplied coordinates; not an official Mars Trek bookmark export",
+    "extent": [
+      75.1537692,
+      15.9058484,
+      78.8717121,
+      19.4453003
+    ],
+    "layers": [
+      "Mars_Viking_MDIM21_ClrMosaic_global_232m",
+      "JEZ_ctx_B_soc_008_orthoMosaic_6m_Eqc_latTs0_lon0",
+      "JEZ_hirise_soc_006_orthoMosaic_25cm_Eqc_latTs0_lon0_first_dd"
+    ]
+  },
+  {
+    "id": "bookmark-2",
+    "name": "Gale Crater & Mount Sharp (Curiosity / MSL)",
+    "type": "Bookmark",
+    "lat": -4.5895,
+    "lon": 137.4417,
+    "points": [
+      {
+        "name": "Bradbury Landing",
+        "lat": -4.5895,
+        "lon": 137.4417,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Aeolis Mons / Mount Sharp",
+        "lat": -5.08,
+        "lon": 137.85,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Yellowknife Bay",
+        "lat": -4.585,
+        "lon": 137.445,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Kimberley Waypoint",
+        "lat": -4.6,
+        "lon": 137.44,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Pahrump Hills",
+        "lat": -4.67,
+        "lon": 137.4,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Vera Rubin Ridge",
+        "lat": -4.72,
+        "lon": 137.38,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Glen Torridon Clay Unit",
+        "lat": -4.75,
+        "lon": 137.39,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Gediz Vallis Channel",
+        "lat": -4.82,
+        "lon": 137.37,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Mount Sharp Boxwork Formations",
+        "lat": -4.88,
+        "lon": 137.36,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      }
+    ],
+    "sourceURL": "https://science.nasa.gov/mission/msl-curiosity/location-map/",
+    "provenance": "Curated study bookmark; approximate supplied coordinates; not an official Mars Trek bookmark export"
+  },
+  {
+    "id": "bookmark-3",
+    "name": "All Historical NASA Mars Landing Sites Bookmark",
+    "type": "Bookmark",
+    "lat": 22.48,
+    "lon": -47.97,
+    "points": [
+      {
+        "name": "Viking 1 Lander — Chryse Planitia",
+        "lat": 22.48,
+        "lon": -47.97,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Viking 2 Lander — Utopia Planitia",
+        "lat": 47.97,
+        "lon": 134.26,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Mars Pathfinder & Sojourner — Ares Vallis",
+        "lat": 19.13,
+        "lon": -33.22,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Spirit Rover (MER-A) — Gusev Crater / Columbia Hills",
+        "lat": -14.57,
+        "lon": 175.47,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Opportunity Rover (MER-B) — Meridiani Planum / Endeavour Crater",
+        "lat": -1.95,
+        "lon": -5.53,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Phoenix Lander — Green Valley (Vastitas Borealis)",
+        "lat": 68.22,
+        "lon": -125.75,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "InSight Lander — Elysium Planitia",
+        "lat": 4.502,
+        "lon": 135.623,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      }
+    ],
+    "sourceURL": "https://planetarynames.wr.usgs.gov/Page/MARS/target",
+    "provenance": "Curated study bookmark; approximate supplied coordinates; not an official Mars Trek bookmark export"
+  },
+  {
+    "id": "bookmark-4",
+    "name": "Major Martian Volcanoes, Canyons & Polar Landforms",
+    "type": "Bookmark",
+    "lat": 18.65,
+    "lon": -133.8,
+    "points": [
+      {
+        "name": "Olympus Mons",
+        "lat": 18.65,
+        "lon": -133.8,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Ascraeus Mons",
+        "lat": 11.9,
+        "lon": -104.1,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Pavonis Mons",
+        "lat": 1.5,
+        "lon": -113.0,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Arsia Mons",
+        "lat": -8.3,
+        "lon": -120.1,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Elysium Mons",
+        "lat": 25.0,
+        "lon": 147.2,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Alba Mons",
+        "lat": 40.5,
+        "lon": -110.4,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Valles Marineris — Melas Chasma",
+        "lat": -9.8,
+        "lon": -76.4,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Coprates Chasma",
+        "lat": -13.4,
+        "lon": -61.4,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Candor Chasma",
+        "lat": -6.5,
+        "lon": -70.9,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Noctis Labyrinths",
+        "lat": -7.0,
+        "lon": -102.2,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Hellas Planitia Impact Basin",
+        "lat": -42.4,
+        "lon": 70.5,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Argyre Planitia",
+        "lat": -49.7,
+        "lon": -44.0,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Syrtis Major Planum",
+        "lat": 8.4,
+        "lon": 69.5,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Planum Boreum & Chasma Boreale (North Pole)",
+        "lat": 85.0,
+        "lon": -45.0,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      },
+      {
+        "name": "Planum Australe (South Pole)",
+        "lat": -85.0,
+        "lon": 160.0,
+        "provenance": "User-supplied approximate study anchor; not a surveyed IAU center or current rover position"
+      }
+    ],
+    "sourceURL": "https://planetarynames.wr.usgs.gov/Page/MARS/target",
+    "provenance": "Curated study bookmark; approximate supplied coordinates; not an official Mars Trek bookmark export"
+  }
+]

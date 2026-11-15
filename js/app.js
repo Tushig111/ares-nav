@@ -1,17 +1,19 @@
-import { createVehicles } from './vehicles.js?v=map4';
-import { createProjectionController } from './projections.js?v=map4';
-import { fetchDonkiCatalog, installProvenance } from './official-data.js?v=map4';
-import { MarsQuadtreeGlobe, spherePoint, rectanglePoint } from './mars-quadtree-globe.js?v=map4';
-import { createWorkbench } from './exploration-workbench.js?v=map4';
-import { createMobileAR } from './ar-mobile.js?v=map4';
-import { destination } from './geodesy.js?v=map4';
-import { bindControls } from './controls.js?v=map4';
+import { pickReferenceMap } from './map-picking.js?v=trek1';
+import { createTrekSearch } from './trek-search.js?v=trek1';
+import { createVehicles } from './vehicles.js?v=trek1';
+import { createProjectionController } from './projections.js?v=trek1';
+import { fetchDonkiCatalog, installProvenance } from './official-data.js?v=trek1';
+import { MarsQuadtreeGlobe, spherePoint, rectanglePoint } from './mars-quadtree-globe.js?v=trek1';
+import { createWorkbench } from './exploration-workbench.js?v=trek1';
+import { createMobileAR } from './ar-mobile.js?v=trek1';
+import { destination } from './geodesy.js?v=trek1';
+import { bindControls } from './controls.js?v=trek1';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { createSpaceAudioEngine } from './audio.js?v=map4';
-import { SITES, LAYERS } from './data.js?v=map4';
-import { hash2, valueNoise, fbm, ridgedFbm } from './noise.js?v=map4';
-import { GLSL_PARTICLE_VERTEX_SHADER, GLSL_PARTICLE_FRAGMENT_SHADER, GLSL_SPARKLE_VERTEX_SHADER, GLSL_SPARKLE_FRAGMENT_SHADER, GLSL_TERRAIN_VERTEX_SHADER, GLSL_TERRAIN_FRAGMENT_SHADER } from './shaders.js?v=map4';
+import { createSpaceAudioEngine } from './audio.js?v=trek1';
+import { SITES, LAYERS } from './data.js?v=trek1';
+import { hash2, valueNoise, fbm, ridgedFbm } from './noise.js?v=trek1';
+import { GLSL_PARTICLE_VERTEX_SHADER, GLSL_PARTICLE_FRAGMENT_SHADER, GLSL_SPARKLE_VERTEX_SHADER, GLSL_SPARKLE_FRAGMENT_SHADER, GLSL_TERRAIN_VERTEX_SHADER, GLSL_TERRAIN_FRAGMENT_SHADER } from './shaders.js?v=trek1';
 
 // 1. CHLADNI-PLATE AUTONOMOUS CYMATIC STANDING-WAVE GPU SHADERS
 //    C(x, z) = a * sin(PI * n * x) * sin(PI * m * z) + b * sin(PI * m * x) * sin(PI * n * z)
@@ -59,6 +61,7 @@ let mobileAR = null;
 let vehicles = null;
 let progressiveGlobe = null;
 let projectionView = null;
+let trekPanel = null;
 let survivalSavedRoute = null;
 const MOBILE = matchMedia('(max-width: 767px)').matches;
 
@@ -3173,7 +3176,8 @@ function animate(time, frame) {
   if (mobileAR?.active) { mobileAR.update(time, frame); return; }
   upgrades?.update(dt);
   vehicles?.update(dt);
-  projectionView?.update();
+  projectionView?.update(dt);
+  trekPanel?.update();
   progressiveGlobe?.update(marsMat.opacity);
 
   particleShaderMat.uniforms.uTime.value = elapsed;
@@ -3744,7 +3748,7 @@ function initializeExplorationTools() {
     source.dataset.sourceLayer=info.sourceLayer;
     source.dataset.blending=String(info.blending);
   }});
-  projectionView = createProjectionController({ camera, controls, globe: marsMesh, tiles: progressiveGlobe, onProjection: mode => {upgrades?.measurements.refresh();document.getElementById('caption-kicker').textContent=mode==='rectangle'?'NASA IMAGERY · EQUIRECTANGULAR 2:1 · PROJECTED SCALE':'NASA IMAGERY · REFERENCE SPHERE · DERIVED MARKERS';}, isOrbital: () => state.mode === 'orbital', enterOrbital: () => { if (state.mode !== 'orbital' || state.globeIntroMorph.active) window.setMode('orbital'); }, pauseMotion: () => { state.autoSpin=false; state.isCameraTransitioning=false; document.getElementById('spin-btn').classList.remove('active'); } });
+  projectionView = createProjectionController({ camera, controls, globe: marsMesh, tiles: progressiveGlobe, onProjection: mode => {upgrades?.measurements.refresh();trekPanel?.refreshProjection();document.getElementById('caption-kicker').textContent=mode==='rectangle'?'NASA IMAGERY · EQUIRECTANGULAR 2:1 · PROJECTED SCALE':'NASA IMAGERY · REFERENCE SPHERE · DERIVED MARKERS';}, isOrbital: () => state.mode === 'orbital', enterOrbital: () => { if (state.mode !== 'orbital' || state.globeIntroMorph.active) window.setMode('orbital'); }, pauseMotion: () => { state.autoSpin=false; state.isCameraTransitioning=false; document.getElementById('spin-btn').classList.remove('active'); } });
   controls.addEventListener('change', () => {
     if (state.mode !== 'orbital') return;
     progressiveGlobe?.invalidate();
@@ -3782,16 +3786,7 @@ function initializeExplorationTools() {
       if(state.mode!=='orbital'){showToast('Coordinate capture uses the reference globe; surface terrain is synthetic.');return null;}
       const rect=renderer.domElement.getBoundingClientRect();
       const ndc=new THREE.Vector2((event.clientX-rect.left)/rect.width*2-1,-(event.clientY-rect.top)/rect.height*2+1);
-      const ray=new THREE.Raycaster();ray.setFromCamera(ndc,camera);
-      if(progressiveGlobe.rectangle){
-        const local=ray.ray.clone().applyMatrix4(progressiveGlobe.group.matrixWorld.clone().invert());
-        const p=local.intersectPlane(new THREE.Plane(new THREE.Vector3(0,0,1),0),new THREE.Vector3());
-        if(!p||Math.abs(p.x)>2*MARS_RADIUS||Math.abs(p.y)>MARS_RADIUS)return null;
-        return {lat:p.y/MARS_RADIUS*90,lon:p.x/(2*MARS_RADIUS)*180};
-      }
-      const hit=ray.intersectObject(marsMesh,false)[0];if(!hit)return null;
-      const p=marsMesh.worldToLocal(hit.point.clone()).normalize();
-      return {lat:THREE.MathUtils.radToDeg(Math.asin(p.y)),lon:((THREE.MathUtils.radToDeg(Math.atan2(p.z,-p.x))-180+540)%360)-180};
+      return pickReferenceMap(ndc,camera,marsMesh,progressiveGlobe,MARS_RADIUS);
     },
     getView:()=>({zoom:camera.zoom,projection:projectionView?.mode,site:state.siteIndex,mode:state.mode,layer:progressiveGlobe.layer,camera:camera.position.toArray(),target:controls.target.toArray(),globeRotation:marsMesh.rotation.toArray().slice(0,3),autoSpin:state.autoSpin}),
     restoreView:view=>{
@@ -3830,11 +3825,22 @@ function initializeExplorationTools() {
       }
     }
   };
+  // Search owns all geographic POIs; legacy illustrative beacons remain in the
+  // scene graph but are not shown automatically or mistaken for search results.
+  for(const b of beaconAnchors)b.anchor.visible=false;
+  for(const m of mountainMarkers)m.anchor.visible=false;
+  for(const o of marsMesh.children)if(o.isLine||o.geometry===arcPacketGeo)o.visible=false;
+  document.body.classList.add('conditional-map-pois');
+  for(const sat of satellites){sat.body.parent.visible=false;for(const o of orbitalGroup.children)if(o.geometry===sat.beamGeo)o.visible=false;}
+  api.projection=projectionView;api.ensureOrbital=()=>{if(state.mode!=='orbital')window.setMode('orbital');};
   upgrades=createWorkbench(api);
+  api.syncLayer=key=>{upgrades.host.querySelector('[data-globe-layer]').value=key;};api.setOrbiters=show=>{const visible=show&&!progressiveGlobe.rectangle;for(const sat of satellites){sat.body.parent.visible=visible;for(const o of orbitalGroup.children)if(o.geometry===sat.beamGeo)o.visible=visible;}};
+  api.measurements=upgrades.measurements;api.selectionChanged=record=>{const s=SITES[state.siteIndex];document.getElementById('caption-title').textContent=record?`${record.name} · ${record.lat.toFixed(4)}°, ${record.lon.toFixed(4)}° E`:`${s.shortName} (${s.coords})`;};trekPanel=createTrekSearch(api);
+
   vehicles=createVehicles({parent:surfaceGroup,getSite:()=>SITES[state.siteIndex],getHeight:getSiteHeight,getMode:()=>state.mode,host:upgrades.host,enterSurface:()=>{if(state.mode==='orbital')window.setMode('hybrid');},focus:(point,offset)=>{surfaceParticles.visible=false;routeGroup.visible=false;placeDemoGroup.visible=false;scrubRing.visible=false;dropPreviewGroup.visible=false;astronautRig.root.visible=false;controls.minDistance=.12;state.autoSpin=false;state.suitDemoActive=false;state.povMode='free';controls.enabled=true;state.isCameraTransitioning=false;controls.target.copy(point);camera.position.copy(point).add(offset);camera.lookAt(point);controls.update();}});
 
   mobileAR=createMobileAR({renderer,buttonHost:upgrades.arHost,onStatus:message=>{upgrades.arStatus.textContent=message;},onActive:active=>{
-    controls.enabled=!active&&state.povMode==='free'&&!upgrades.measurements.enabled;
+    controls.enabled=!active&&state.povMode==='free';
   },makeModel:()=>{
     const model=state.mode==='orbital'?marsMesh.clone(true):surfaceGroup.clone(true);
     model.visible=true;model.position.set(0,0,0);return model;

@@ -45,3 +45,32 @@ export function installProvenance(getSite,getDonki) {
  // Persistent labels survive scenario updates without altering numeric/model behavior.
  for(const id of ['wx-temp','wx-pressure','wx-tau','m-rad','m-o2','spectral-panel','visor-hud']) {const el=document.getElementById(id);if(el){el.title='SIMULATED — not a live NASA measurement';el.dataset.provenance='simulation';}}
 }
+
+export const TREK_SEARCH_SOURCES = Object.freeze({
+ catalog:'https://trek.nasa.gov/tiles/apidoc/trekAPI.html?body=mars',
+ gazetteer:'https://planetarynames.wr.usgs.gov/Page/MARS/target',
+ perseverance:'https://science.nasa.gov/mission/mars-2020-perseverance/location-map/',
+ curiosity:'https://science.nasa.gov/mission/msl-curiosity/location-map/'
+});
+export function parseSearchCoordinates(text){
+ const match=String(text).trim().match(/^([+-]?\d+(?:\.\d+)?)\s*[,\s]\s*([+-]?\d+(?:\.\d+)?)$/);
+ if(!match)return null;const lat=Number(match[1]),lon=Number(match[2]);
+ if(Math.abs(lat)>90||Math.abs(lon)>360)throw new Error('Latitude must be −90..90; longitude −360..360 east-positive.');
+ return {lat,lon:((lon+180)%360+360)%360-180};
+}
+export async function loadSearchCatalog(fetcher=fetch){
+ const files=['mars-features.json','mars-bookmarks.json','mars-layer-catalog.json','search-source-manifest.json'];
+ const [features,bookmarks,layers,manifest]=await Promise.all(files.map(async name=>{const r=await fetcher(new URL('../data/'+name,import.meta.url));if(!r.ok)throw Error(`Catalog unavailable: ${name} (${r.status})`);return r.json();}));
+ if(!Array.isArray(features)||features.some(f=>!Number.isFinite(f.lat)||!Number.isFinite(f.lon)||Math.abs(f.lat)>90))throw Error('Invalid Gazetteer snapshot');
+ return {features,bookmarks,layers,manifest};
+}
+export function filterSearchRecords(records,{query='',metadata=false,type='all',near=null}={}){
+ const fold=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();const terms=fold(query).split(/\s+/).filter(Boolean);
+ return records.filter(r=>{
+  if(type!=='all'&&r.kind!==type)return false;
+  const text=fold([r.name,r.title,r.aliases,r.type,metadata?r.description:'',metadata?r.mission:'',metadata?r.instrument:'',metadata?r.productLabel:''].join(' '));
+  if(!terms.every(t=>text.includes(t)))return false;
+  if(near){if(!Number.isFinite(r.lat))return false;const rad=Math.PI/180,a=r.lat*rad,b=near.lat*rad,d=(r.lon-near.lon)*rad;const angle=Math.acos(Math.min(1,Math.max(-1,Math.sin(a)*Math.sin(b)+Math.cos(a)*Math.cos(b)*Math.cos(d))));if(angle*3389.5>500)return false;}
+  return true;
+ });
+}

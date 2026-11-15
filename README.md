@@ -27,3 +27,7 @@ Open **Explore + Measure → Rovers + MAV demonstration**. Choose Gale for Curio
 ## Four projections
 
 The map selector now includes **Global Map (Rectangle)**: a full 2:1 longitude/latitude map using the same quadtree and texture cache. All orthographic modes support zoom up to 32768× and pan; available tiles refine through CTX L11. Choose a projection, then scroll/pinch or use +/−. See [MAP-PROJECTIONS.md](MAP-PROJECTIONS.md) for validation and source-coverage limits.
+
+## Search and navigation update
+
+See [TREK-NAVIGATION.md](TREK-NAVIGATION.md) for the official Gazetteer/catalog snapshots, curated bookmark provenance, four-map controls and measurement reference. The new browser checks are at [tests/trek-navigation.html](tests/trek-navigation.html).

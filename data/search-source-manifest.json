@@ -1,0 +1,14 @@
+{
+  "retrievedAt": "2026-11-15T04:11:47.233815+00:00",
+  "featureSource": "https://asc-planetarynames-data.s3.us-west-2.amazonaws.com/MARS_nomenclature_center_pts.kmz",
+  "featureSourceLandingPage": "https://planetarynames.wr.usgs.gov/Page/MARS/target",
+  "featureSourceSHA256": "b4f78d69e3c97de5f2f296a8fb008c3367f7d682ac92c7244329b9a8e186ec3a",
+  "featureCount": 2055,
+  "layerSource": "https://trek.nasa.gov/mars/TrekServices/ws/index/eq/searchItems?start=0&rows=2147483647&facetKeys=itemType%7CproductCat2%7CserviceTypes%7CthumbnailURLDir&facetValues=product%7C-%28DEM%20ConfidenceRaw%20Slope%29%7CMosaic%7C%5B%2A%20TO%20%2A%5D",
+  "layerCount": 146,
+  "bookmarkSource": "User-requested curated list; approximate local anchors, not an authoritative bookmark API export",
+  "notes": [
+    "The broad Jezero extent belongs to the preliminary Jezero_CTX_BlockAdj_dd catalog entry; it is a study extent, not a landing ellipse.",
+    "Only verified global matrix sets are rendered by the globe. Regional catalogs expose official metadata/capabilities rather than using invalid global tile indices."
+  ]
+}

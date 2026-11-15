@@ -1,0 +1,32 @@
+{
+  "allOriginalHtmlIdsRetained": true,
+  "unchangedProtectedFiles": {
+    "js/vehicles.js": true,
+    "js/ar-mobile.js": true,
+    "js/audio.js": true,
+    "js/shaders.js": true
+  },
+  "changedFiles": [
+    "index.html",
+    "TREK-NAVIGATION.md",
+    "css/trek-search.css",
+    "js/exploration-workbench.js",
+    "js/map-picking.js",
+    "js/startup.js",
+    "js/search-markers.js",
+    "js/measurement-tools.js",
+    "js/projections.js",
+    "js/trek-search.js",
+    "js/official-data.js",
+    "js/app.js",
+    "tests/trek-navigation.html",
+    "data/search-source-manifest.json",
+    "data/mars-layer-catalog.json",
+    "data/mars-bookmarks.json",
+    "data/trek-browser-checks.json",
+    "data/jezero-native-matrix-validation.json",
+    "data/trek-regression-results.json",
+    "data/mars-features.json"
+  ],
+  "allModelsAndDracoUnchanged": true
+}

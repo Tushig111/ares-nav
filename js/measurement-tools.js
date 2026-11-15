@@ -1,7 +1,8 @@
 import * as THREE from 'three';
-import { MARS, validatePoint, wrapLongitude, planetographicLatitude, pathMetrics, interpolate, toMarsGeoJSON } from './geodesy.js?v=map4';
+import { MARS, validatePoint, wrapLongitude, planetographicLatitude, pathMetrics, interpolate, toMarsGeoJSON } from './geodesy.js?v=trek1';
 export function createMeasurementTools(api, host) {
   const group=new THREE.Group();api.globe.add(group);
+  const activePointers=new Set();
   let points=[],redo=[],mode='inspect',enabled=false,east360=false,down=null,savedAutoSpin=false;
   const output=host.querySelector('[data-measure-output]');
   const panel=host.querySelector('[data-vertices]');
@@ -24,11 +25,12 @@ export function createMeasurementTools(api, host) {
       const remove=document.createElement('button');remove.textContent='×';remove.setAttribute('aria-label',`Delete vertex ${i+1}`);remove.onclick=()=>{points.splice(i,1);redo=[];render();};row.append(remove);panel.append(row);
     });
     try{const m=pathMetrics(points,mode==='polygon');const last=points.at(-1);
+      api.onMeasurement?.({points:points.map(p=>({...p})),...m});
       output.textContent=`Mars mean sphere R=${MARS.radius.toLocaleString()} m\nSurface: ${(m.surface/1000).toFixed(3)} km · 3D chords: ${(m.chord/1000).toFixed(3)} km\n${mode==='polygon'?`Area: ${(m.area/1e6).toFixed(4)} km²\n`:''}Terrain-following: unavailable (no measured DEM)\n${last?`Last point: centric ${last.lat.toFixed(5)}° · graphic ${planetographicLatitude(last.lat).toFixed(5)}°`:'Click globe or add coordinates.'}`;
     }catch(error){output.textContent=error.message;}
   }
   host.querySelector('[data-measure-mode]').onchange=e=>{mode=e.target.value;render();};
-  host.querySelector('[data-measure-enable]').onchange=e=>{enabled=e.target.checked;if(enabled){savedAutoSpin=api.getState().autoSpin;api.getState().autoSpin=false;api.cancelWaypoint();}else api.getState().autoSpin=savedAutoSpin;api.controls.enabled=!enabled;};
+  host.querySelector('[data-measure-enable]').onchange=e=>{enabled=e.target.checked;if(enabled){savedAutoSpin=api.getState().autoSpin;api.getState().autoSpin=false;api.cancelWaypoint();}else api.getState().autoSpin=savedAutoSpin;api.controls.enabled=true;api.onMeasurementStatus?.(enabled);};
   host.querySelector('[data-longitude]').onchange=e=>{east360=e.target.checked;render();};
   host.querySelector('[data-add-coordinate]').onclick=()=>{
     try{const p=validatePoint({lat:Number(host.querySelector('[data-lat]').value),lon:Number(host.querySelector('[data-lon]').value)});const index=host.querySelector('[data-edit-index]');
@@ -48,9 +50,10 @@ export function createMeasurementTools(api, host) {
     try{await navigator.clipboard.writeText(location.href);output.textContent+='\nShare URL copied.';}catch{output.textContent+='\nCopy this page URL to share.';}
   };
   const restore=()=>{if(!location.hash.startsWith('#ares='))return;try{const raw=location.hash.slice(6);if(raw.length>30000)throw new Error('Share state too large');const data=JSON.parse(decodeURIComponent(raw));if(data.v!==1||!Array.isArray(data.points)||data.points.length>200)throw new Error('Invalid share state');points=data.points.map(validatePoint);mode=['inspect','line','polygon'].includes(data.mode)?data.mode:'inspect';east360=!!data.east360;host.querySelector('[data-measure-mode]').value=mode;host.querySelector('[data-longitude]').checked=east360;api.restoreView(data.view);render();}catch(error){output.textContent=`Could not restore: ${error.message}`;}};
-  api.canvas.addEventListener('pointerdown',e=>{if(enabled)down={x:e.clientX,y:e.clientY};},true);
-  api.canvas.addEventListener('pointerup',e=>{if(!enabled||!down)return;e.stopImmediatePropagation();const start=down;down=null;if(Math.hypot(e.clientX-start.x,e.clientY-start.y)>8)return;const p=api.pick(e);if(!p)return;if(mode==='inspect')points=[p];else if(points.length<200)points.push(p);redo=[];render();},true);
+  api.canvas.addEventListener('pointerdown',e=>{activePointers.add(e.pointerId);if(enabled&&activePointers.size===1)down={x:e.clientX,y:e.clientY,id:e.pointerId};else down=null;},true);
+  api.canvas.addEventListener('pointerup',e=>{activePointers.delete(e.pointerId);if(!enabled||!down||down.id!==e.pointerId)return;const start=down;down=null;if(Math.hypot(e.clientX-start.x,e.clientY-start.y)>8)return;const p=api.pick(e);if(!p)return;if(mode==='inspect')points=[p];else if(points.length<200)points.push(p);redo=[];render();},true);
+  api.canvas.addEventListener('pointercancel',e=>{activePointers.delete(e.pointerId);down=null;},true);
   addEventListener('keydown',e=>{if(e.key==='Escape'&&enabled){enabled=false;host.querySelector('[data-measure-enable]').checked=false;api.controls.enabled=true;api.getState().autoSpin=savedAutoSpin;}});
   addEventListener('hashchange',restore);restore();render();
-  return {refresh:render,update(){if(api.camera?.isOrthographicCamera){const size=(api.camera.top-api.camera.bottom)/api.camera.zoom/(api.canvas.clientHeight||800)*5/.025;for(const dot of group.children)if(dot.userData.marker)dot.scale.setScalar(size);}else for(const dot of group.children)if(dot.userData.marker)dot.scale.setScalar(1);group.visible=api.getState().mode==='orbital';if(enabled)api.controls.enabled=false;},get enabled(){return enabled;},snapshot(){return {points:points.map(p=>({...p})),mode};}};
+  return {activate(next='line',value=true){api.ensureOrbital?.();mode=next;host.querySelector('[data-measure-mode]').value=next;const box=host.querySelector('[data-measure-enable]');box.checked=value;box.dispatchEvent(new Event('change'));render();},clear(){points=[];redo=[];render();},refresh:render,update(){if(api.camera?.isOrthographicCamera){const size=(api.camera.top-api.camera.bottom)/api.camera.zoom/(api.canvas.clientHeight||800)*5/.025;for(const dot of group.children)if(dot.userData.marker)dot.scale.setScalar(size);}else for(const dot of group.children)if(dot.userData.marker)dot.scale.setScalar(1);group.visible=api.getState().mode==='orbital';},get enabled(){return enabled;},snapshot(){return {points:points.map(p=>({...p})),mode};}};
 }

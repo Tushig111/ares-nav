@@ -1,0 +1,180 @@
+{
+  "navigation": {
+    "passed": 28,
+    "total": 28,
+    "results": [
+      {
+        "name": "Complete downloaded Gazetteer contains 2055 valid approved feature centers",
+        "passed": true
+      },
+      {
+        "name": "Jezero official center rounds to separately verified Gazetteer values",
+        "passed": true
+      },
+      {
+        "name": "Four supplied bookmark groups retain all 42 approximate anchors",
+        "passed": true
+      },
+      {
+        "name": "Official NASA catalog has 146 distinct products, including Jezero controlled CTX and HiRISE",
+        "passed": true
+      },
+      {
+        "name": "Entered coordinates wrap east longitude consistently",
+        "passed": true
+      },
+      {
+        "name": "Out-of-range latitude is rejected",
+        "passed": true
+      },
+      {
+        "name": "Metadata filter is distinct from title-only matching",
+        "passed": true
+      },
+      {
+        "name": "Spatial distance filter crosses the antimeridian correctly",
+        "passed": true
+      },
+      {
+        "name": "Initial map has zero selected POI markers",
+        "passed": true
+      },
+      {
+        "name": "Selecting Jezero creates precisely its eleven study POIs",
+        "passed": true
+      },
+      {
+        "name": "Hide Markers suppresses visible selected markers",
+        "passed": true
+      },
+      {
+        "name": "Remove clears all selected POI geometry",
+        "passed": true
+      },
+      {
+        "name": "Orthographic left drag and one-finger touch use PAN",
+        "passed": true
+      },
+      {
+        "name": "Two-finger wheel scroll pans without changing zoom",
+        "passed": true
+      },
+      {
+        "name": "Ctrl-wheel pinch zoom anchors the same screen-plane location",
+        "passed": true
+      },
+      {
+        "name": "Fly To Area converges on the requested rectangle coordinate",
+        "passed": true
+      },
+      {
+        "name": "Global globe restores left-button rotation",
+        "passed": true
+      },
+      {
+        "name": "Keyboard flight changes camera position only while enabled",
+        "passed": true
+      },
+      {
+        "name": "global reference-map picking returns known planetocentric coordinates",
+        "passed": true
+      },
+      {
+        "name": "rectangle reference-map picking returns known planetocentric coordinates",
+        "passed": true
+      },
+      {
+        "name": "north reference-map picking returns known planetocentric coordinates",
+        "passed": true
+      },
+      {
+        "name": "south reference-map picking returns known planetocentric coordinates",
+        "passed": true
+      },
+      {
+        "name": "Rectangle picking rejects coordinates beyond its longitude domain",
+        "passed": true
+      },
+      {
+        "name": "One-click line measurement keeps map navigation enabled",
+        "passed": true
+      },
+      {
+        "name": "Direct pin clicks report independent one-degree Mars arc distance",
+        "passed": true
+      },
+      {
+        "name": "A drag does not drop an extra measurement pin",
+        "passed": true
+      },
+      {
+        "name": "A two-pointer gesture does not drop measurement pins",
+        "passed": true
+      },
+      {
+        "name": "Clear pins clears both geometry and total distance",
+        "passed": true
+      }
+    ]
+  },
+  "projections": {
+    "passed": 13,
+    "total": 13,
+    "results": [
+      {
+        "name": "North uses true orthographic projection",
+        "passed": true
+      },
+      {
+        "name": "North camera follows tilted globe axis",
+        "passed": true
+      },
+      {
+        "name": "Polar view disables rotation, enables screen pan",
+        "passed": true
+      },
+      {
+        "name": "Center picking ray intersects north hemisphere",
+        "passed": true
+      },
+      {
+        "name": "Orthographic zoom changes projection scale",
+        "passed": true
+      },
+      {
+        "name": "South faces opposite globe axis",
+        "passed": true
+      },
+      {
+        "name": "Projection changes reuse exact cache and globe",
+        "passed": true
+      },
+      {
+        "name": "Polar resize maintains aspect ratio",
+        "passed": true
+      },
+      {
+        "name": "Global restores perspective camera and position",
+        "passed": true
+      },
+      {
+        "name": "Rectangle camera is orthographic and faces the map plane",
+        "passed": true
+      },
+      {
+        "name": "Rectangle minimum zoom fits the entire 2:1 map on a portrait screen",
+        "passed": true
+      },
+      {
+        "name": "Orthographic max zoom admits deep L11 refinement",
+        "passed": true
+      },
+      {
+        "name": "Invalid mode is rejected",
+        "passed": true
+      }
+    ]
+  },
+  "gpu": "GPU tile blend checks\n\n3/3 passed (actual GPU framebuffer samples)\n\nPASS: Transparent CTX child never erases the Viking underlay\nPASS: Opaque gray CTX detail blends gradually from color\nPASS: Transparent intermediate CTX parent keeps ancestor color until detail arrives",
+  "checkedAt": "2026-11-15T04:55:15.754Z"
+}
