@@ -1,3 +1,7 @@
+# Layer visibility fix
+
+See [LAYER-VISIBILITY-FIX.md](LAYER-VISIBILITY-FIX.md). Enabling a local layer now focuses its footprint; Whole globe restores the full planet.
+
 # Integrated scientific GIS build
 
 See [SCIENTIFIC-GIS.md](SCIENTIFIC-GIS.md) for current layer status, coordinate conventions, provenance and verification. Eight local demo layers function; official MOLA imagery and USGS geology remain available. Older source-library status reports below describe earlier builds.

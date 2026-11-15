@@ -1,8 +1,8 @@
 <!doctype html><html><head><meta charset="utf-8"><title>Scientific GIS verification</title><script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script></head><body><h1>Scientific GIS verification</h1><pre id="result">Running…</pre><div id="layer-list"></div><div id="host"></div><script type="module">
 import * as THREE from 'three';
-import {createScientificLayerManager} from '../js/scientific-layer-manager.js?v=gis1';
-import {spherePoint,rectanglePoint} from '../js/mars-quadtree-globe.js?v=gis1';
-import {SCIENCE_IDS,localToMars,compareRoute} from '../js/science-model.js?v=gis1';
+import {createScientificLayerManager} from '../js/scientific-layer-manager.js?v=gis2';
+import {spherePoint,rectanglePoint} from '../js/mars-quadtree-globe.js?v=gis2';
+import {SCIENCE_IDS,localToMars,compareRoute} from '../js/science-model.js?v=gis2';
 const checks=[],check=(name,pass)=>{checks.push({name,pass:!!pass});if(!pass)throw Error(name);},wait=async(fn)=>{for(let i=0;i<400;i++){if(fn())return;await new Promise(r=>setTimeout(r,10));}throw Error('Timeout waiting for grid');};
 try{
 const scene=new THREE.Scene(),surfaceGroup=new THREE.Group(),routeGroup=new THREE.Group(),group=new THREE.Group();scene.add(surfaceGroup,group);surfaceGroup.add(routeGroup);

@@ -208,7 +208,7 @@ export class MarsQuadtreeGlobe {
     this.directBadge=null;this.fastWanted.clear();for(const n of this.fastNodes.values())if(n.mesh)n.mesh.visible=false;
     if(!Number.isFinite(focusLat)||!Number.isFinite(focusLon)||Math.abs(focusLat)>90||Math.abs(focusLon)>180){this.targetLevel=1;return;}
     const height=this.renderer.domElement.clientHeight||800;
-    const span=this.camera.isOrthographicCamera?(this.camera.top-this.camera.bottom)/this.camera.zoom:2*Math.max(.00001,this.camera.position.distanceTo(this.parent.getWorldPosition(new THREE.Vector3()))-this.radius)*Math.tan(THREE.MathUtils.degToRad(this.camera.fov/2));
+    const span=this.camera.isOrthographicCamera?(this.camera.top-this.camera.bottom)/this.camera.zoom:2*Math.max(.00001,this.camera.position.distanceTo(this.parent.getWorldPosition(new THREE.Vector3()))-this.radius)*(Math.tan(THREE.MathUtils.degToRad(this.camera.fov/2))/(this.camera.zoom||1));
     const pixelsPerRadian=height*this.radius/Math.max(1e-8,span);
     let target=1;for(let z=1;z<=maxLevel;z++)if(Math.PI/2**z*pixelsPerRadian>LAYERS[this.sourceLayer(z)].size*1.3)target=Math.min(maxLevel,z+1);
     this.targetLevel=target;if(target<5)return;
@@ -371,7 +371,7 @@ export class MarsQuadtreeGlobe {
       const lat=THREE.MathUtils.clamp(focusLat,node.south,node.north);
       let lon=focusLon;if(lon<node.west)lon+=360;if(lon>node.east)lon-=360;lon=THREE.MathUtils.clamp(lon,node.west,node.east);
       const distance=Math.max(.01,localCamera.distanceTo(spherePoint(lat,lon,this.radius)));
-      return this.radius*node.angular*height/(2*Math.tan(THREE.MathUtils.degToRad(this.camera.fov/2))*distance);
+      return this.radius*node.angular*height/(2*(Math.tan(THREE.MathUtils.degToRad(this.camera.fov/2))/(this.camera.zoom||1))*distance);
     };
     const priority = node => {
       if(focusLat>=node.south&&focusLat<=node.north&&focusLon>=node.west&&focusLon<=node.east)return -1e6-node.z;

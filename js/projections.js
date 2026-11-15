@@ -80,18 +80,20 @@ export function createProjectionController({camera, controls, globe, tiles, ente
  for(const b of ui.querySelectorAll('[data-projection]')){b.setAttribute('aria-pressed',String(b.dataset.projection==='global'));b.onclick=()=>setMode(b.dataset.projection);}
  function panPixels(x,y){const span=(camera.top-camera.bottom)/camera.zoom/(element?.clientHeight||800);const right=new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld,0),up=new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld,1);const shift=right.multiplyScalar(-x*span).addScaledVector(up,y*span);camera.position.add(shift);controls.target.add(shift);}
  function zoomAt(delta){const before=new THREE.Vector3(cursor.x,cursor.y,0).unproject(camera);camera.zoom=THREE.MathUtils.clamp(camera.zoom*Math.exp(-delta*.006),1,32768);updateProjection();const after=new THREE.Vector3(cursor.x,cursor.y,0).unproject(camera),shift=before.sub(after);camera.position.add(shift);controls.target.add(shift);}
- function flyTo({lat,lon,extent}){
+ function flyTo({lat,lon,extent,inspectionMeters}){
   if(!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90)throw Error('Invalid flight coordinates');
   enterOrbital();pauseMotion();
   if(mode==='north'&&lat<0)setMode('south');else if(mode==='south'&&lat>0)setMode('north');
   globe.updateWorldMatrix(true,true);let p=tiles.point?tiles.point(lat,lon).applyMatrix4(tiles.group.matrixWorld):new THREE.Vector3();
-  const span=extent?Math.max((((extent[2]-extent[0])%360+360)%360||360),Math.abs(extent[3]-extent[1])):.06;
-  let target=p.clone(),position,zoom=camera.zoom;
-  if(mode==='global'){target=globe.getWorldPosition(new THREE.Vector3());const altitude=Math.max(.04,(tiles.radius||4.6)*THREE.MathUtils.degToRad(span)*1.8);position=p.clone().sub(target).normalize().multiplyScalar((tiles.radius||4.6)+altitude).add(target);}
+  const span=Number.isFinite(inspectionMeters)&&inspectionMeters>0?inspectionMeters/3389500*180/Math.PI:extent?Math.max((((extent[2]-extent[0])%360+360)%360||360),Math.abs(extent[3]-extent[1])):.06;
+  let target=p.clone(),position,zoom=1;
+  if(mode==='global'){target=globe.getWorldPosition(new THREE.Vector3());const altitude=Math.max(.04,(tiles.radius||4.6)*THREE.MathUtils.degToRad(span)*1.8);position=p.clone().sub(target).normalize().multiplyScalar((tiles.radius||4.6)+altitude).add(target);if(Number.isFinite(inspectionMeters)&&inspectionMeters>0){const footprint=inspectionMeters/3389500*(tiles.radius||4.6);const height=2*altitude*Math.tan(THREE.MathUtils.degToRad(camera.fov/2));zoom=THREE.MathUtils.clamp(height/(footprint*2.5),1,32);}}
   else {position=p.clone().addScaledVector(camera.getWorldDirection(new THREE.Vector3()),-16);const worldSpan=Math.max(.00001,THREE.MathUtils.degToRad(span)*(tiles.radius||4.6)*(mode==='rectangle'?2/Math.PI:1));zoom=THREE.MathUtils.clamp(Math.min(camera.right-camera.left,camera.top-camera.bottom)/(worldSpan*1.6),1,32768);}
   flight={from:camera.position.clone(),to:position,fromTarget:controls.target.clone(),target,fromZoom:camera.zoom,zoom,t:0};tiles.invalidate();
  }
- return {setMode,flyTo,toggleFly(value){flyMode=value??!flyMode;keys.clear();pauseMotion();return flyMode;},get flyMode(){return flyMode;},get mode(){return mode;},reset(){if(mode!=='global')setMode('global');},update(dt=1/60){
+ return {setMode,flyTo,wholeGlobe(){
+  if(mode!=='global')setMode('global');enterOrbital();pauseMotion();flight=null;camera.zoom=1;camera.fov=42;const center=globe.getWorldPosition(new THREE.Vector3());controls.target.copy(center);camera.position.copy(center).add(new THREE.Vector3(0,3.2,13.5));camera.up.set(0,1,0);camera.lookAt(center);updateProjection();controls.update();tiles.invalidate();
+ },toggleFly(value){flyMode=value??!flyMode;keys.clear();pauseMotion();return flyMode;},get flyMode(){return flyMode;},get mode(){return mode;},reset(){if(mode!=='global')setMode('global');camera.zoom=1;updateProjection();},update(dt=1/60){
   const amount=1-Math.exp(-Math.min(.05,dt)*18);
   if(mode!=='global'){
    controls.zoomSpeed=.8;

@@ -1,23 +1,23 @@
-import {createScientificLayerManager} from './scientific-layer-manager.js?v=gis1';
-import {createGeologyLayers} from './geology-layers.js?v=gis1';
-import {createProximityLabels} from './proximity-labels.js?v=gis1';
-import {createMobileShell} from './mobile-shell.js?v=gis1';
-import { pickReferenceMap } from './map-picking.js?v=gis1';
-import { createTrekSearch } from './trek-search.js?v=gis1';
-import { createVehicles } from './vehicles.js?v=gis1';
-import { createProjectionController } from './projections.js?v=gis1';
-import { fetchDonkiCatalog, installProvenance } from './official-data.js?v=gis1';
-import { MarsQuadtreeGlobe, spherePoint, rectanglePoint } from './mars-quadtree-globe.js?v=gis1';
-import { createWorkbench } from './exploration-workbench.js?v=gis1';
-import { createMobileAR } from './ar-mobile.js?v=gis1';
-import { destination } from './geodesy.js?v=gis1';
-import { bindControls } from './controls.js?v=gis1';
+import {createScientificLayerManager} from './scientific-layer-manager.js?v=gis2';
+import {createGeologyLayers} from './geology-layers.js?v=gis2';
+import {createProximityLabels} from './proximity-labels.js?v=gis2';
+import {createMobileShell} from './mobile-shell.js?v=gis2';
+import { pickReferenceMap } from './map-picking.js?v=gis2';
+import { createTrekSearch } from './trek-search.js?v=gis2';
+import { createVehicles } from './vehicles.js?v=gis2';
+import { createProjectionController } from './projections.js?v=gis2';
+import { fetchDonkiCatalog, installProvenance } from './official-data.js?v=gis2';
+import { MarsQuadtreeGlobe, spherePoint, rectanglePoint } from './mars-quadtree-globe.js?v=gis2';
+import { createWorkbench } from './exploration-workbench.js?v=gis2';
+import { createMobileAR } from './ar-mobile.js?v=gis2';
+import { destination } from './geodesy.js?v=gis2';
+import { bindControls } from './controls.js?v=gis2';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { createSpaceAudioEngine } from './audio.js?v=gis1';
-import { SITES, LAYERS } from './data.js?v=gis1';
-import { hash2, valueNoise, fbm, ridgedFbm } from './noise.js?v=gis1';
-import { GLSL_PARTICLE_VERTEX_SHADER, GLSL_PARTICLE_FRAGMENT_SHADER, GLSL_SPARKLE_VERTEX_SHADER, GLSL_SPARKLE_FRAGMENT_SHADER, GLSL_TERRAIN_VERTEX_SHADER, GLSL_TERRAIN_FRAGMENT_SHADER } from './shaders.js?v=gis1';
+import { createSpaceAudioEngine } from './audio.js?v=gis2';
+import { SITES, LAYERS } from './data.js?v=gis2';
+import { hash2, valueNoise, fbm, ridgedFbm } from './noise.js?v=gis2';
+import { GLSL_PARTICLE_VERTEX_SHADER, GLSL_PARTICLE_FRAGMENT_SHADER, GLSL_SPARKLE_VERTEX_SHADER, GLSL_SPARKLE_FRAGMENT_SHADER, GLSL_TERRAIN_VERTEX_SHADER, GLSL_TERRAIN_FRAGMENT_SHADER } from './shaders.js?v=gis2';
 
 // 1. CHLADNI-PLATE AUTONOMOUS CYMATIC STANDING-WAVE GPU SHADERS
 //    C(x, z) = a * sin(PI * n * x) * sin(PI * m * z) + b * sin(PI * m * x) * sin(PI * n * z)
@@ -2872,12 +2872,12 @@ function updateZoomScaleAndDestinationHUD(remKm) {
   const camDist = camera.position.distanceTo(controls.target);
 
   if (state.mode === 'orbital') {
-    const zoomRatio = (13.5 / Math.max(4.64, camDist)).toFixed(1);
+    const zoomRatio = (13.5 * camera.zoom / Math.max(4.64, camDist)).toFixed(1);
     const planetRadiusKm = 3389.5;
     const altKm = Math.max(0, (camDist - MARS_RADIUS) * planetRadiusKm / MARS_RADIUS);
     // Exact symmetric ray/sphere intersections give a scale at the view centre.
     const viewportHeight = renderer.domElement.clientHeight || window.innerHeight;
-    const tanHalfFov = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+    const tanHalfFov = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) / camera.zoom;
     const theta = Math.min(Math.atan(64 * tanHalfFov / viewportHeight), Math.asin(MARS_RADIUS / camDist) * 0.8);
     const rayDistance = camDist * Math.cos(theta) - Math.sqrt(Math.max(0, MARS_RADIUS ** 2 - camDist ** 2 * Math.sin(theta) ** 2));
     const halfArc = Math.atan2(rayDistance * Math.sin(theta), camDist - rayDistance * Math.cos(theta));

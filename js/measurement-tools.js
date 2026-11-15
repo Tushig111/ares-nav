@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { MARS, validatePoint, wrapLongitude, planetographicLatitude, pathMetrics, interpolate, toMarsGeoJSON } from './geodesy.js?v=gis1';
+import { MARS, validatePoint, wrapLongitude, planetographicLatitude, pathMetrics, interpolate, toMarsGeoJSON } from './geodesy.js?v=gis2';
 export function createMeasurementTools(api, host) {
   const group=new THREE.Group();api.tiles.group?.add(group)||api.globe.add(group);
   const badges=document.createElement('div');badges.className='pin-badges';badges.setAttribute('aria-label','Map measurement pins');document.body.append(badges);
